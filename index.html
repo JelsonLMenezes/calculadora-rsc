@@ -8,13 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --ifpe-verde-principal: #008000; /* Um verde vibrante para o IFPE */
-            --ifpe-verde-claro: #e6ffe6; /* Um verde bem claro para fundos */
-            --ifpe-vermelho-principal: #CC0000; /* Um vermelho forte */
-            --ifpe-vermelho-claro: #ffe6e6; /* Um vermelho bem claro para fundos de alerta */
-            --ifpe-preto: #333333; /* Preto para textos principais */
-            --ifpe-cinza-claro: #f0f0f0; /* Um cinza mais suave para fundos */
-            --ifpe-cinza-texto: #555555; /* Um cinza para textos secundários */
+            --ifpe-verde-principal: #38A169; /* Um verde menos vibrante */
+            --ifpe-verde-claro: #ECFDF5; /* Um verde bem claro para fundos */
+            --ifpe-vermelho-principal: #E53E3E; /* Um vermelho menos forte */
+            --ifpe-vermelho-claro: #FFF5F5; /* Um vermelho bem claro para fundos de alerta */
+            --ifpe-azul-principal: #3182CE; /* Um azul para destaque */
+            --ifpe-azul-claro: #EBF8FF; /* Um azul bem claro para fundos de destaque */
+            --ifpe-preto: #2D3748; /* Preto para textos principais, levemente mais suave */
+            --ifpe-cinza-claro: #F7FAFC; /* Um cinza mais suave para fundos */
+            --ifpe-cinza-texto: #718096; /* Um cinza para textos secundários */
         }
 
         body {
@@ -30,35 +32,44 @@
         .card {
             background-color: #ffffff;
             border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Sombra mais suave */
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
         .input-field {
-            border: 1px solid #d1d5db;
+            border: 1px solid #CBD5E0; /* Borda mais suave */
             border-radius: 0.5rem;
             padding: 0.5rem 0.75rem;
             width: 100%;
             box-sizing: border-box;
-            color: var(--ifpe-preto); /* Garante que o texto dentro do input seja escuro */
+            color: var(--ifpe-preto);
+            transition: all 0.2s ease-in-out; /* Transição suave para hover/focus */
+        }
+        .input-field:hover {
+            border-color: #90CDF4; /* Borda azul clara no hover */
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #4299E1; /* Borda azul no focus */
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Sombra azul no focus */
         }
         .table-header th {
-            background-color: var(--ifpe-verde-principal); /* Cabeçalho da tabela com o verde principal */
-            color: #ffffff; /* Texto branco no cabeçalho */
+            background-color: var(--ifpe-verde-principal);
+            color: #ffffff;
             padding: 0.75rem 1rem;
             text-align: left;
             font-weight: 600;
             border-bottom: 1px solid var(--ifpe-verde-principal);
         }
         .table-header th:first-child {
-            border-top-left-radius: 0.75rem; /* Arredonda o canto superior esquerdo */
+            border-top-left-radius: 0.75rem;
         }
         .table-header th:last-child {
-            border-top-right-radius: 0.75rem; /* Arredonda o canto superior direito */
+            border-top-right-radius: 0.75rem;
         }
         .table-row td {
             padding: 0.75rem 1rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid #E2E8F0; /* Borda da célula mais suave */
         }
         .table-row:last-child td {
             border-bottom: none;
@@ -83,20 +94,12 @@
             border: 1px solid var(--ifpe-vermelho-principal);
         }
         /* Customizando os resumos de pontuação */
-        .summary-box-green {
-            background-color: var(--ifpe-verde-claro);
-            border: 1px solid var(--ifpe-verde-principal);
-            color: var(--ifpe-verde-principal);
+        .summary-box-blue {
+            background-color: var(--ifpe-azul-claro);
+            border: 1px solid var(--ifpe-azul-principal);
+            color: var(--ifpe-azul-principal);
         }
-        .summary-box-green .text-bold {
-            color: var(--ifpe-preto);
-        }
-        .summary-box-red {
-            background-color: var(--ifpe-vermelho-claro);
-            border: 1px solid var(--ifpe-vermelho-principal);
-            color: var(--ifpe-vermelho-principal);
-        }
-        .summary-box-red .text-bold {
+        .summary-box-blue .text-bold {
             color: var(--ifpe-preto);
         }
 
@@ -119,11 +122,12 @@
         <div class="card">
             <h2 class="text-xl font-semibold mb-4" style="color: var(--ifpe-preto);">Resumo da Pontuação</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-4 rounded-lg summary-box-green">
+                <div class="p-4 rounded-lg summary-box-blue">
                     <p class="font-medium">Pontuação Total Atual:</p>
                     <p id="total-score" class="text-3xl font-bold mt-1 text-bold">0</p>
                 </div>
-                <div class="p-4 rounded-lg summary-box-red"> <p class="font-medium">Itens Contabilizados:</p>
+                <div class="p-4 rounded-lg summary-box-blue">
+                    <p class="font-medium">Itens Contabilizados:</p>
                     <p id="total-items" class="text-3xl font-bold mt-1 text-bold">0</p>
                 </div>
             </div>
