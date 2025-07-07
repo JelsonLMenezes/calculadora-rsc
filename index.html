@@ -8,15 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --ifpe-verde-principal: #38A169; /* Um verde menos vibrante */
-            --ifpe-verde-claro: #ECFDF5; /* Um verde bem claro para fundos */
-            --ifpe-vermelho-principal: #E53E3E; /* Um vermelho menos forte */
-            --ifpe-vermelho-claro: #FFF5F5; /* Um vermelho bem claro para fundos de alerta */
-            --ifpe-azul-principal: #3182CE; /* Um azul para destaque */
-            --ifpe-azul-claro: #EBF8FF; /* Um azul bem claro para fundos de destaque */
-            --ifpe-preto: #2D3748; /* Preto para textos principais, levemente mais suave */
-            --ifpe-cinza-claro: #F7FAFC; /* Um cinza mais suave para fundos */
-            --ifpe-cinza-texto: #718096; /* Um cinza para textos secundários */
+            --ifpe-verde-principal: #2E8B57; /* Um verde mais escuro e sóbrio */
+            --ifpe-verde-claro: #D4EDDA; /* Um verde bem claro para fundos */
+            --ifpe-vermelho-principal: #B22222; /* Um vermelho mais escuro e sério */
+            --ifpe-vermelho-claro: #F8D7DA; /* Um vermelho bem claro para fundos de alerta */
+            --ifpe-azul-principal: #1F618D; /* Um azul para destaque, mais profundo */
+            --ifpe-azul-claro: #D6EAF8; /* Um azul bem claro para fundos de destaque */
+            --ifpe-preto: #34495E; /* Preto para textos principais, mais para um cinza escuro */
+            --ifpe-cinza-claro: #F5F7F8; /* Um cinza bem suave para fundos */
+            --ifpe-cinza-texto: #616A6B; /* Um cinza para textos secundários */
         }
 
         body {
@@ -64,6 +64,7 @@
         .table-header th:first-child {
             border-top-left-radius: 0.75rem;
         }
+        /* Corrigido: a borda arredondada superior direita deve ser na última coluna */
         .table-header th:last-child {
             border-top-right-radius: 0.75rem;
         }
@@ -148,8 +149,8 @@
                         <th>Saber e Competência</th>
                         <th>Unidade de Medida</th>
                         <th>Pontuação por Unidade</th>
-                        <th class="rounded-tr-lg">Quantidade</th>
-                        <th>Pontuação Total</th>
+                        <th>Quantidade</th>
+                        <th class="rounded-tr-lg">Pontuação Total</th>
                     </tr>
                 </thead>
                 <tbody id="rsc-items" class="divide-y divide-gray-200">
@@ -260,8 +261,8 @@
 
             // Data for RSC levels and their requirements
             const rscLevels = [
-                { level: "RSC-1", prerequisite: "Fund Incompleto", minItems: 2, minPoints: 10, iq: "IQ Fundamental Completo (10%)" },
-                { level: "RSC-2", prerequisite: "Fund. Completo", minItems: 3, minPoints: 20, iq: "IQ Médio (20%)" },
+                { level: "RSC-1", prerequisite: "Fundamental Incompleto", minItems: 2, minPoints: 10, iq: "IQ Fundamental Completo (10%)" },
+                { level: "RSC-2", prerequisite: "Fundamental Completo", minItems: 3, minPoints: 20, iq: "IQ Médio (20%)" },
                 { level: "RSC-3", prerequisite: "Médio/Técnico", minItems: 4, minPoints: 25, iq: "IQ Graduação (25%)" },
                 { level: "RSC-4", prerequisite: "Graduação", minItems: 5, minPoints: 30, iq: "IQ Especialização (30%)" },
                 { level: "RSC-5", prerequisite: "Pós-graduação", minItems: 8, minPoints: 52, iq: "IQ Mestrado (52%)" },
