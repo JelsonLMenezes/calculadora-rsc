@@ -6,17 +6,19 @@
     <title>Calculadora de Pontos RSC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
-            --ifpe-verde-principal: #2E8B57; /* Um verde mais escuro e sóbrio */
-            --ifpe-verde-claro: #D4EDDA; /* Um verde bem claro para fundos */
-            --ifpe-vermelho-principal: #B22222; /* Um vermelho mais escuro e sério */
-            --ifpe-vermelho-claro: #F8D7DA; /* Um vermelho bem claro para fundos de alerta */
-            --ifpe-azul-principal: #1F618D; /* Um azul para destaque, mais profundo */
-            --ifpe-azul-claro: #D6EAF8; /* Um azul bem claro para fundos de destaque */
-            --ifpe-preto: #34495E; /* Preto para textos principais, mais para um cinza escuro */
-            --ifpe-cinza-claro: #F5F7F8; /* Um cinza bem suave para fundos */
-            --ifpe-cinza-texto: #616A6B; /* Um cinza para textos secundários */
+            --ifpe-verde-principal: #2E8B57;
+            --ifpe-verde-claro: #D4EDDA;
+            --ifpe-vermelho-principal: #B22222;
+            --ifpe-vermelho-claro: #F8D7DA;
+            --ifpe-azul-principal: #1F618D;
+            --ifpe-azul-claro: #D6EAF8;
+            --ifpe-preto: #34495E;
+            --ifpe-cinza-claro: #F5F7F8;
+            --ifpe-cinza-texto: #616A6B;
+            --ifpe-laranja-alerta: #FF8C00;
         }
 
         body {
@@ -32,26 +34,36 @@
         .card {
             background-color: #ffffff;
             border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Sombra mais suave */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
         .input-field {
-            border: 1px solid #CBD5E0; /* Borda mais suave */
+            border: 1px solid #CBD5E0;
             border-radius: 0.5rem;
             padding: 0.5rem 0.75rem;
             width: 100%;
             box-sizing: border-box;
             color: var(--ifpe-preto);
-            transition: all 0.2s ease-in-out; /* Transição suave para hover/focus */
+            transition: all 0.2s ease-in-out;
         }
         .input-field:hover {
-            border-color: #90CDF4; /* Borda azul clara no hover */
+            border-color: #90CDF4;
         }
         .input-field:focus {
             outline: none;
-            border-color: #4299E1; /* Borda azul no focus */
-            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Sombra azul no focus */
+            border-color: #4299E1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+        .input-error {
+            border-color: var(--ifpe-vermelho-principal) !important;
+            box-shadow: 0 0 0 3px rgba(178, 34, 34, 0.5) !important;
+        }
+        .error-message {
+            color: var(--ifpe-vermelho-principal);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
         }
         .table-header th {
             background-color: var(--ifpe-verde-principal);
@@ -60,21 +72,42 @@
             text-align: left;
             font-weight: 600;
             border-bottom: 1px solid var(--ifpe-verde-principal);
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .table-header th:hover {
+            background-color: #267a48;
+        }
+        .table-header th.sorted-asc::after {
+            content: " ▲";
+        }
+        .table-header th.sorted-desc::after {
+            content: " ▼";
         }
         .table-header th:first-child {
             border-top-left-radius: 0.75rem;
         }
-        /* Corrigido: a borda arredondada superior direita deve ser na última coluna */
         .table-header th:last-child {
             border-top-right-radius: 0.75rem;
         }
+        
+        /* Tabela striped (listrada) */
+        .table-row:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .table-row:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        
         .table-row td {
             padding: 0.75rem 1rem;
-            border-bottom: 1px solid #E2E8F0; /* Borda da célula mais suave */
+            border-bottom: 1px solid #E2E8F0;
         }
         .table-row:last-child td {
             border-bottom: none;
         }
+        
         .rsc-level-box {
             border-radius: 0.5rem;
             padding: 0.75rem 1rem;
@@ -83,6 +116,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease-out;
         }
         .rsc-level-box.met {
             background-color: var(--ifpe-verde-claro);
@@ -94,7 +130,20 @@
             color: var(--ifpe-vermelho-principal);
             border: 1px solid var(--ifpe-vermelho-principal);
         }
-        /* Customizando os resumos de pontuação */
+        .rsc-level-box .status-icon {
+            font-size: 1.5rem;
+            margin-left: 0.5rem;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 139, 87, 0.4); }
+            70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(46, 139, 87, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(46, 139, 87, 0); }
+        }
+        .rsc-level-box.met.pulse-animation {
+            animation: pulse 0.8s ease-out;
+        }
+
         .summary-box-blue {
             background-color: var(--ifpe-azul-claro);
             border: 1px solid var(--ifpe-azul-principal);
@@ -104,6 +153,89 @@
             color: var(--ifpe-preto);
         }
 
+        .clear-button {
+            background-color: var(--ifpe-vermelho-principal);
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            border: none;
+            display: block;
+            margin-top: 1.5rem;
+            width: fit-content;
+        }
+
+        .clear-button:hover {
+            background-color: #A00000;
+        }
+
+        .search-input {
+            border: 1px solid #CBD5E0;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            color: var(--ifpe-preto);
+            transition: all 0.2s ease-in-out;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #4299E1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+        }
+
+        /* Estilos melhorados para tooltips */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+            margin-left: 0.5rem;
+            cursor: pointer;
+            z-index: 10; /* Garante que o tooltip fique acima de outros elementos */
+        }
+        .tooltip-icon {
+            color: var(--ifpe-azul-principal);
+            font-size: 0.8em;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            background-color: var(--ifpe-azul-principal);
+            color: #fff;
+            text-align: left;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            position: absolute;
+            z-index: 100; /* Valor alto para garantir que fique acima de tudo */
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            width: 300px;
+            max-width: 90vw; /* Limita a largura em dispositivos móveis */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 0.875rem;
+            line-height: 1.4;
+            pointer-events: none; /* Permite clicar através do tooltip quando visível */
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--ifpe-azul-principal) transparent transparent transparent;
+        }
+
+        /* Estilos responsivos para a tabela */
         @media (max-width: 768px) {
             .table-header th, .table-row td {
                 padding: 0.5rem 0.75rem;
@@ -111,6 +243,107 @@
             }
             .input-field {
                 padding: 0.4rem 0.6rem;
+            }
+            
+            /* Layout de tabela responsiva - transforma em cards */
+            table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+            }
+            
+            thead {
+                display: none;
+            }
+            
+            tbody {
+                display: block;
+                width: 100%;
+            }
+            
+            .table-row {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #E2E8F0;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                background-color: white;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            
+            .table-row td {
+                display: flex;
+                flex-wrap: wrap;
+                width: 100%;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            
+            .table-row td:last-child {
+                border-bottom: none;
+            }
+            
+            /* Adiciona labels antes de cada célula */
+            .table-row td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                width: 40%;
+                display: inline-block;
+                color: var(--ifpe-azul-principal);
+                padding-right: 0.5rem;
+            }
+            
+            /* Ajustes para células específicas */
+            .table-row td:nth-child(1) {
+                font-weight: bold;
+                color: var(--ifpe-verde-principal);
+            }
+            
+            .table-row td:nth-child(1)::before {
+                content: "Item Nº";
+            }
+            
+            .table-row td:nth-child(2)::before {
+                content: "Saber e Competência";
+            }
+            
+            .table-row td:nth-child(3)::before {
+                content: "Documentos Comprobatórios";
+            }
+            
+            .table-row td:nth-child(4)::before {
+                content: "Unidade de Medida";
+            }
+            
+            .table-row td:nth-child(5)::before {
+                content: "Pontuação por Unidade";
+            }
+            
+            .table-row td:nth-child(6)::before {
+                content: "Quantidade";
+            }
+            
+            .table-row td:nth-child(7)::before {
+                content: "Pontuação Total";
+                font-weight: bold;
+            }
+            
+            /* Ajuste para inputs */
+            .table-row td input {
+                width: 60%;
+                min-width: 100px;
+            }
+            
+            /* Ajuste para tooltips em mobile */
+            .tooltip-text {
+                width: 250px;
+                left: 100%;
+                transform: translateX(-100%);
+            }
+            
+            .tooltip-text::after {
+                left: 100%;
+                margin-left: -10px;
             }
         }
     </style>
@@ -123,34 +356,69 @@
         <div class="card">
             <h2 class="text-xl font-semibold mb-4" style="color: var(--ifpe-preto);">Resumo da Pontuação</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="p-4 rounded-lg summary-box-blue">
-                    <p class="font-medium">Pontuação Total Atual:</p>
-                    <p id="total-score" class="text-3xl font-bold mt-1 text-bold">0</p>
+                <div class="p-4 rounded-lg summary-box-blue flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">
+                            Pontuação Total Atual:
+                            <span class="tooltip-container">
+                                <i class="fas fa-info-circle tooltip-icon"></i>
+                                <span class="tooltip-text">Este é o somatório de todos os pontos obtidos pelos saberes e competências que você preencheu. Cada item tem uma pontuação base, que é multiplicada pela quantidade informada.</span>
+                            </span>
+                        </p>
+                        <p id="total-score" class="text-3xl font-bold mt-1 text-bold">0</p>
+                    </div>
+                    <i class="fas fa-calculator text-4xl opacity-20" style="color: var(--ifpe-azul-principal);"></i>
                 </div>
-                <div class="p-4 rounded-lg summary-box-blue">
-                    <p class="font-medium">Itens Contabilizados:</p>
-                    <p id="total-items" class="text-3xl font-bold mt-1 text-bold">0</p>
+                <div class="p-4 rounded-lg summary-box-blue flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">
+                            Itens Contabilizados:
+                            <span class="tooltip-container">
+                                <i class="fas fa-info-circle tooltip-icon"></i>
+                                <span class="tooltip-text">Indica a quantidade de saberes e competências diferentes para os quais você informou uma quantidade maior que zero. Para atingir os Níveis RSC, é necessário um mínimo de itens contabilizados.</span>
+                            </span>
+                        </p>
+                        <p id="total-items" class="text-3xl font-bold mt-1 text-bold">0</p>
+                    </div>
+                    <i class="fas fa-list-ol text-4xl opacity-20" style="color: var(--ifpe-azul-principal);"></i>
                 </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                <button id="clear-button" class="clear-button">Limpar Tudo</button>
             </div>
         </div>
 
         <div class="card">
-            <h2 class="text-xl font-semibold mb-4" style="color: var(--ifpe-preto);">Requisitos Mínimos por Nível de RSC</h2>
+            <h2 class="text-xl font-semibold mb-4 flex items-center" style="color: var(--ifpe-preto);">
+                Requisitos Mínimos por Nível de RSC
+                <span class="tooltip-container ml-2">
+                    <i class="fas fa-info-circle tooltip-icon"></i>
+                    <span class="tooltip-text">
+                        Os Níveis RSC (Reconhecimento de Saberes e Competências) são a forma de progredir na carreira, equivalente a ter títulos acadêmicos. Para cada nível, você precisa de uma <strong>Pontuação Mínima</strong> e um <strong>Mínimo de Itens Contabilizados</strong>.
+                        <br><br>
+                        A caixa estará <strong>verde</strong> se você atendeu aos requisitos de pontuação e itens para aquele nível.
+                        <br><br>
+                        A caixa estará <strong>vermelha</strong> se você ainda não atendeu a um ou ambos os requisitos.
+                    </span>
+                </span>
+            </h2>
             <div id="rsc-levels" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 </div>
         </div>
 
         <div class="card overflow-x-auto">
             <h2 class="text-xl font-semibold mb-4" style="color: var(--ifpe-preto);">Rol de Saberes e Competências</h2>
+            <input type="text" id="search-input" class="search-input" placeholder="Buscar por saber e competência...">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="table-header">
                     <tr>
-                        <th class="rounded-tl-lg">Nº</th>
-                        <th>Saber e Competência</th>
-                        <th>Unidade de Medida</th>
-                        <th>Pontuação por Unidade</th>
+                        <th data-sort="id">Nº</th>
+                        <th data-sort="saber">Saber e Competência</th>
+                        <th data-sort="documentos">Documentos Comprobatórios</th>
+                        <th data-sort="unidade">Unidade de Medida</th>
+                        <th data-sort="pontos">Pontuação por Unidade</th>
                         <th>Quantidade</th>
-                        <th class="rounded-tr-lg">Pontuação Total</th>
+                        <th data-sort="total">Pontuação Total</th>
                     </tr>
                 </thead>
                 <tbody id="rsc-items" class="divide-y divide-gray-200">
@@ -165,146 +433,451 @@
             const totalScoreElement = document.getElementById('total-score');
             const totalItemsElement = document.getElementById('total-items');
             const rscLevelsContainer = document.getElementById('rsc-levels');
+            const clearButton = document.getElementById('clear-button');
+            const searchInput = document.getElementById('search-input');
+            const tableHeaders = document.querySelectorAll('.table-header th[data-sort]');
 
-            // Data for RSC items from Anexo II
+            // Dados dos itens RSC com descrições e documentos comprobatórios
             const rscData = [
-                { id: 1, saber: "Atuação na área de gestão e/ou fiscalização de contratos, convênios e acordos", unidade: "Tempo (mês)", pontos: 0.1 },
-                { id: 2, saber: "Atuação como suplente na área de gestão e/ou fiscalização de contratos, convênios e acordos", unidade: "Tempo (mês)", pontos: 0.05 },
-                { id: 3, saber: "Atuação em comissões de corregedoria ou correição", unidade: "Por portaria de designação, incluídas as prorrogações", pontos: 2.5 },
-                { id: 4, saber: "Atuação em processo licitatório de aquisição e contratação", unidade: "Por processo licitatório", pontos: 1 },
-                { id: 5, saber: "Desenvolvimento de tecnologias e soluções práticas que tenham impacto institucional", unidade: "Por solução (evento)", pontos: 6.25 },
-                { id: 6, saber: "Elaboração de editais", unidade: "Por edital", pontos: 0.125 },
-                { id: 7, saber: "Elaboração de notas técnicas, chamadas públicas, pareceres técnicos, nota informativa, manuais e roteiros técnicos ou documentação similar", unidade: "Por notas técnicas, chamadas públicas, pareceres técnicos, nota informativa ou documentação similar", pontos: 1.25 },
-                { id: 8, saber: "Elogio profissional", unidade: "Por portaria (evento)", pontos: 1.25 },
-                { id: 9, saber: "Participação como membro de comissão organizadora de processo seletivo, vestibular, concurso ou exames públicos", unidade: "Por Edital (evento)", pontos: 1 },
-                { id: 10, saber: "Participação como membro de comissão responsável por processo seletivo, vestibular, concurso ou exames públicos", unidade: "Por Edital (evento)", pontos: 1 },
-                { id: 11, saber: "Participação como membro em grupos, núcleos e comissões de políticas públicas inclusivas e afirmativas (heteroidentificação, gênero, diversidade, avaliação socioeconômica, PCD, avaliação de cotas)", unidade: "Por declaração ou certificado de participação", pontos: 1 },
-                { id: 12, saber: "Participação como membro em comissões, comitês, grupos de trabalho e grupo de estudos em organizações privadas, entidades profissionais ou organizações da sociedade civil", unidade: "Por declaração/documento oficial de realização da atividade", pontos: 1 },
-                { id: 13, saber: "Participação como membro titular em comissões, comitês e grupos no âmbito da administração pública", unidade: "Por portaria/declaração Comissão /Comitê/GT (evento)", pontos: 1.25 },
-                { id: 14, saber: "Participação como membro suplente em comissões, comitês, grupos previstos no âmbito da administração pública", unidade: "Por portaria/declaração Comissão /Comitê/GT (evento)", pontos: 0.5 },
-                { id: 15, saber: "Participação em brigadas voluntárias de combate a incêndio e pânico e/ou em ações voluntárias", unidade: "Por Ação ou Por participação em Brigada", pontos: 1 },
-                { id: 16, saber: "Participação em comissões de saúde e segurança no trabalho", unidade: "Por mandato/designação. (evento)", pontos: 1 },
-                { id: 17, saber: "Participação em conselhos superiores e órgãos colegiados das IFE", unidade: "Por mandato/designação. (evento)", pontos: 2.5 },
-                { id: 18, saber: "Participação, no exercício do cargo, em Consultorias e Assessoria Técnica Especializada", unidade: "Por consultoria", pontos: 1 },
-                { id: 19, saber: "Participação em programas e políticas públicas externos à instituição", unidade: "Por programas e políticas públicas (evento)", pontos: 1 },
-                { id: 20, saber: "Participação na coordenação/supervisão, fiscalização, logística de preparação e/ou realização de concurso público ou exames públicos", unidade: "Por Edital (evento)", pontos: 0.625 },
-                { id: 21, saber: "Tempo de efetivo exercício na carreira", unidade: "Tempo (mês)", pontos: 0.125 },
-                { id: 22, saber: "Tempo de serviço e/ou vínculo empregatício em outras instituições públicas e/ou privadas", unidade: "Tempo (mês)", pontos: 0.05 },
-                { id: 23, saber: "Trabalho desenvolvido em órgãos estatais e/ou paraestatais, escolas de governo, agências reguladoras, organismo internacionais", unidade: "Ano completo (tempo)", pontos: 0.5 },
-                { id: 24, saber: "Trabalho desenvolvido no âmbito do Ministério da Educação e suas entidades vinculadas (cessão e/ou colaboração técnica)", unidade: "Tempo (mês)", pontos: 0.05 },
-                { id: 25, saber: "Participação como membro da gestão e/ou do conselho fiscal, ou comissão sindical e associações vinculadas às IFE", unidade: "Por mandato (evento)", pontos: 2.5 },
-                { id: 26, saber: "Participação como membro em comissões permanentes e/ou assessorias instituídas por lei", unidade: "Por mandato (evento)", pontos: 2.5 },
-                { id: 27, saber: "Participação como membro de comissão de consulta/eleitoral", unidade: "Por consulta/eleição (evento)", pontos: 1 },
-                { id: 28, saber: "Participação como membro em conselho profissional", unidade: "Mandato (evento)", pontos: 0.5 },
-                { id: 29, saber: "Participação como membro titular e/ou suplente da Comissão Interna de Supervisão da carreira (CIS) e outras comissões correlatas.", unidade: "Por ano de mandato", pontos: 0.5 },
-                { id: 30, saber: "Participação na organização de eventos pedagógicos, educacionais, científicos, tecnológicos, esportivos, sociais, sindical, filantrópicos ou culturais", unidade: "Por certificado / declaração", pontos: 1 },
-                { id: 31, saber: "Representação institucional em conselhos e/ou órgãos municipais, estaduais e federais, organizações sociais, assistenciais e/ou sem fins lucrativos", unidade: "Por portaria/declaração (evento)", pontos: 1 },
-                { id: 32, saber: "Coordenação/presidência de comissões, comitês, grupos de trabalho ou grupo de estudo na administração pública", unidade: "Por portaria/declaração (evento)", pontos: 2.5 },
-                { id: 33, saber: "Atuação do servidor como titular e/ou substituto eventual do titular ocupante de Cargo de Direção (CD) ou equivalente.", unidade: "Tempo (mês)", pontos: 0.25 },
-                { id: 34, saber: "Atuação do servidor como titular e/ou substituto eventual do titular ocupante de Função Gratificada (FG) ou equivalente.", unidade: "Tempo (mês)", pontos: 0.125 },
-                { id: 35, saber: "Responsável por setor, unidade ou equipe", unidade: "Tempo (mês)", pontos: 0.125 },
-                { id: 36, saber: "Proficiência ou curso em LIBRAS e/ou língua estrangeira", unidade: "Por certificação (evento)", pontos: 5 },
-                { id: 37, saber: "Certificação Profissional na área de atuação", unidade: "Por certificação (evento)", pontos: 1.25 },
-                { id: 38, saber: "Participação em capacitações como instrutor ou conteudista em curso de formação, de desenvolvimento ou de treinamento", unidade: "Por curso, independente da carga horária (evento)", pontos: 1 },
-                { id: 39, saber: "Participação em capacitações como tutor, monitor, ou orientador mentor em curso de formação, de desenvolvimento ou de treinamento, incluindo tutoria de estágio probatório", unidade: "Por participação, independente da carga horária (evento)", pontos: 0.5 },
-                { id: 40, saber: "Participação em capacitações, incluindo disciplinas isoladas em cursos de graduação e pós-graduação, que desenvolvam competências alinhadas aos objetivos institucionais e/ou que favoreçam a formação continuada no cargo", unidade: "Por Carga horária (a cada 10 horas)", pontos: 0.25 },
-                { id: 41, saber: "Títulos de educação formal, diferente do requisito de escolaridade e formação especializada exigidos para o ingresso no cargo ocupado pelo servidor", unidade: "Por diploma ou certificado (evento)", pontos: 6.25 },
-                { id: 42, saber: "Autoria de obras artísticas e cultural registradas", unidade: "Por obra artística e cultura", pontos: 2.5 },
-                { id: 43, saber: "Autor de projeto aprovado em edital de pesquisa e/ou extensão.", unidade: "Por edital/Projeto", pontos: 2.5 },
-                { id: 44, saber: "Captação de recursos em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou gestão e/ou assistência", unidade: "Por edital/Projeto", pontos: 2.5 },
-                { id: 45, saber: "Carta Patente", unidade: "Por patente", pontos: 5 },
-                { id: 46, saber: "Contratos de transferência de tecnologia e licenciamento.", unidade: "Por contrato", pontos: 5 },
-                { id: 47, saber: "Coordenação de acordos ou convênios de cooperação", unidade: "Por acordo / convênio", pontos: 2.5 },
-                { id: 48, saber: "Coordenação de elaboração de Projetos Pedagógicos de novos Cursos.", unidade: "Por projeto", pontos: 2.5 },
-                { id: 49, saber: "Desenvolvimento de projeto gráfico, diagramação ou identidade visual", unidade: "Por projeto", pontos: 1 },
-                { id: 50, saber: "Desenvolvimento de software e sistemas digitais", unidade: "Por registro", pontos: 5 },
-                { id: 51, saber: "Edição de mídias técnicas veiculadas em jornais, revistas e sites", unidade: "Por item", pontos: 0.1 },
-                { id: 52, saber: "Edição de roteiros para programas de rádio, TV e mídias; eventos institucionais (artísticos, culturais e esportivos)", unidade: "Por item", pontos: 0.1 },
-                { id: 53, saber: "Edição, organização, revisão, tradução e avaliação/parecer em publicações institucionais, bem como avaliação do projeto em si (critérios de relevância, execução, aspectos formais, metodológicos e teóricos)", unidade: "Por livro/periódico (evento)", pontos: 1 },
-                { id: 54, saber: "Liderança ou vice-liderança de grupo de pesquisa registrado", unidade: "Por grupo de pesquisa", pontos: 2.5 },
-                { id: 55, saber: "Atuação de servidor como avaliador em eventos acadêmicos, científicos, culturais, esportivos e técnicos envolvendo a análise crítica, avaliação e emissão de pareceres sobre trabalhos, projetos ou apresentações realizadas", unidade: "Por evento", pontos: 1 },
-                { id: 56, saber: "Atividade de avaliação do projeto de ensino e/ou pesquisa e/ou extensão e/ou inovação, verificando se o mesmo foi submetido de forma adequada e de acordo com as normas", unidade: "Por projeto", pontos: 1 },
-                { id: 57, saber: "Participação como coordenador de implantação de unidades de ensino", unidade: "Por unidade de ensino", pontos: 2.5 },
-                { id: 58, saber: "Participação como coordenador em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou assistência, na própria instituição ou em parceria com outras instituições", unidade: "Por projeto", pontos: 2.5 },
-                { id: 59, saber: "Participação como mediador, palestrante, apresentador ou artista em congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, debate, oficina, jornada, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.", unidade: "Por evento", pontos: 1 },
-                { id: 60, saber: "Participação como membro de equipe de implantação de unidades de ensino.", unidade: "Por unidade de ensino implantada", pontos: 1 },
-                { id: 61, saber: "Participação como ouvinte ou assistente em congresso, simpósio, fórum, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.", unidade: "Por evento", pontos: 0.125 },
-                { id: 62, saber: "Participação em comissão de elaboração/reformulaçã o de projetos pedagógicos de cursos técnicos integrados ao ensino médio, técnicos concomitantes ou subsequentes, graduação ou pós-graduação cursos de formação inicial e continuada (FIC)", unidade: "Por projeto", pontos: 0.5 },
-                { id: 63, saber: "Participação em conselhos editoriais", unidade: "Por livro/periódico (evento)", pontos: 2.5 },
-                { id: 64, saber: "Coordenação de elaboração/reformulaçã de projetos pedagógicos de cursos técnicos integrados ao ensino médio, técnicos concomitantes ou subsequentes, graduação ou pós-graduação", unidade: "Por projeto", pontos: 1 },
-                { id: 65, saber: "Participação em grupo de pesquisa registrado", unidade: "Por projeto", pontos: 1 },
-                { id: 66, saber: "Participação em projeto de implantação/implementação de ambientes de ensino/aprendizagem, laboratórios, oficinas, estúdios, alas ou áreas para práticas esportivas, sociais, artísticos e culturais.", unidade: "Por projeto", pontos: 1 },
-                { id: 67, saber: "Participação em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou assistência, na própria instituição ou em parceria com outras instituições.", unidade: "Por projeto", pontos: 1 },
-                { id: 68, saber: "Participação na organização de congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.", unidade: "Por evento", pontos: 1.25 },
-                { id: 69, saber: "Participação no desenvolvimento de protótipos, depósitos e/ou registros de propriedade intelectual.", unidade: "Por projeto", pontos: 2.5 },
-                { id: 70, saber: "Prêmio de mérito profissional ou acadêmico, comendas, homenagens e menções honrosas", unidade: "Por premiação, comenda, homenagem e/ou menção honrosa", pontos: 3.125 },
-                { id: 71, saber: "Produção de material audiovisual", unidade: "Por Projeto", pontos: 1 },
-                { id: 72, saber: "Publicação de artigos, trabalho completo e capítulo de livro (com ISBN e Conselho Editorial)", unidade: "Por publicação (evento)", pontos: 1.5 },
-                { id: 73, saber: "Publicação de livro (com ISBN e Conselho Editorial)", unidade: "Por publicação (evento)", pontos: 2.5 },
-                { id: 74, saber: "Avaliador de curso pelo INEP ou pelo MEC", unidade: "Por avaliação", pontos: 2.5 },
-                { id: 75, saber: "Elaboração, revisão e/ou correção de provas de exame de seleção, vestibular ou concursos", unidade: "Por edital", pontos: 1 },
-                { id: 76, saber: "Participação como jurado na área de atuação", unidade: "Por evento", pontos: 0.5 },
-                { id: 77, saber: "Participação como orientador das monitorias de disciplinas e nas unidades de produção e laboratórios.", unidade: "Por orientação", pontos: 0.5 },
-                { id: 78, saber: "Participação como orientador de bolsistas de apoio técnico.", unidade: "Por orientação", pontos: 0.5 },
-                { id: 79, saber: "Participação como orientador/supervisor de estágios supervisionados.", unidade: "Por orientação/supervisão", pontos: 0.5 },
-                { id: 80, saber: "Participação como preceptor em residências acadêmicas", unidade: "Por precepção", pontos: 1 },
-                { id: 81, saber: "Participação no apoio a atividades de preceptoria em residências médica e multiprofissional", unidade: "Por declaração semestral", pontos: 0.1 },
-                { id: 82, saber: "Participação em situações de surtos, epidemias e pandemias", unidade: "Tempo (mês)", pontos: 0.5 },
-                { id: 83, saber: "Participação em políticas, programas e ações de promoção da saúde.", unidade: "Por programa, plano, projeto e/ou ação.", pontos: 1.5 },
-                { id: 84, saber: "Acolhimento em Saúde Mental, Atendimento em necessidades específicas e Humanização do Atendimento.", unidade: "Atendimento/encaminhamento e/ou participação em programa, plano, projeto e/ou ação de humanização.", pontos: 0.05 },
-                { id: 85, saber: "Atuação em áreas hospitalares críticas e semicríticas", unidade: "Tempo (mês)", pontos: 0.05 },
-                { id: 86, saber: "Atuação em atividades de campo e saídas pedagógicas, acompanhando estudantes, em conjunto com o corpo docente em atividades como: apoio à coleta de dados, observação e análise de comunidades, espaços urbanos, edificações ou fenômenos sociais para análise e registro, levantamentos e mapeamentos, estudos de caso em campo, práticas agrícolas, florestais, geológicas, geográficas e biológicas, projetos de extensão comunitária, visitas técnicas e guiadas a indústrias, laboratórios avançados, centros de pesquisa, obras em andamento, museus, teatros, exposições literárias ou eventos técnicos para expor os alunos a diferentes realidades profissionais e tecnologias.", unidade: "Por atividade de campo ou saída pedagógica", pontos: 0.25 },
-                { id: 87, saber: "Participação em políticas, programas e ações de promoção da inclusão, de gênero, da diversidade, de questões étnico-raciais, indígenas, pessoas com necessidades específicas e direitos humanos.", unidade: "Por programa, plano, projeto e/ou ação.", pontos: 1.5 },
-                { id: 88, saber: "Atuação em atividades de execução / operação, desenvolvimento, colaboração ou treinamento nos sistemas estruturadores do Governo Federal", unidade: "Tempo (mês)", pontos: 0.5 },
-                { id: 89, saber: "Produção, tradução e interpretação de materiais acessíveis", unidade: "Por material produzido, interpretado ou traduzido", pontos: 1 }
+                { id: 1, saber: "Atuação na área de gestão e/ou fiscalização de contratos, convênios e acordos", 
+                  descricao: "Atuação na gestão e/ou fiscalização de contratos, convênios e acordos firmados pela Instituição Federal de Ensino (IFE) com fornecedores, prestadores de serviços, instituições públicas ou privadas, tanto nacionais quanto internacionais.",
+                  documentos: "Documentação emitida pela IFE, designando o servidor como gestor e/ou fiscal de contrato, convênio ou acordo, com a especificação dos objetos geridos; Declaração ou Certidão de Supervisores ou Gestores: assinado por gestores ou chefias atestando a atuação do servidor como gestor e/ou fiscal de contratos, convênios ou acordos, com o respectivo período de atuação.",
+                  unidade: "Tempo (mês)", pontos: 0.1 },
+                { id: 2, saber: "Atuação como suplente na área de gestão e/ou fiscalização de contratos, convênios e acordos", 
+                  descricao: "Atuação como suplente na gestão e/ou fiscalização de contratos, convênios e acordos firmados pela Instituição Federal de Ensino (IFE) com fornecedores, prestadores de serviços, instituições públicas ou privadas, tanto nacionais quanto internacionais.",
+                  documentos: "Documentação emitida pela IFE, designando o servidor como gestor e/ou fiscal de contrato, convênio ou acordo, com a especificação dos objetos geridos; Declaração ou Certidão de Supervisores ou Gestores: assinado por gestores ou chefias atestando a atuação do servidor como gestor e/ou fiscal de contratos, convênios ou acordos, com o respectivo período de atuação.",
+                  unidade: "Tempo (mês)", pontos: 0.05 },
+                { id: 3, saber: "Atuação em comissões de corregedoria ou correição", 
+                  descricao: "Atuação do servidor em atividades de corregedoria ou correição",
+                  documentos: "Portaria de designação, contendo a informação da natureza da comissão/atividade, bem como o período com início e fim.",
+                  unidade: "Por portaria de designação, incluídas as prorrogações", pontos: 2.5 },
+                { id: 4, saber: "Atuação em processo licitatório de aquisição e contratação", 
+                  descricao: "Atuação do servidor nas fases interna e externa dos processos licitatórios e contratos administrativos: I - preparatória; II - de divulgação do edital de licitação; III - de apresentação de propostas e lances, quando for o caso; IV - de julgamento; V - de habilitação; VI - recursal; VII - de homologação.",
+                  documentos: "Portaria de Designação: documento emitido pela IFE, designando os servidores membros da equipe. Declaração ou certidão de Supervisores ou Gestores: Documento oficial assinado por gestores ou chefias atestando a participação do servidor na equipe.",
+                  unidade: "Por processo licitatório", pontos: 1 },
+                { id: 5, saber: "Desenvolvimento de tecnologias e soluções práticas que tenham impacto institucional", 
+                  descricao: "Valorização do servidor a partir de soluções práticas com impacto institucional incluem desde a criação de novos procedimentos internos, melhorias em sistemas de gestão, desenvolvimento de novas tecnologias, até a simplificação de processos administrativos. Elas são evidenciadas por sua capacidade de gerar resultados concretos, como aumento da produtividade, redução de custos, otimização de recursos humanos e materiais, e melhorias no atendimento à comunidade acadêmica. Desenvolvimento de tecnologias, fluxo processual e outros que contribui para melhoria das práticas realizadas na IFE. O desenvolvimento de equipamentos, instrumentos e ferramentas é um processo técnico e sistemático que envolve a criação, concepção e implementação de dispositivos e instrumentos que atendem a necessidades específicas em diversos setores. Conjunto de atividades necessárias para a conservação ou permanência (manutenção preventiva ou corretiva), de equipamentos, instrumentos e ferramentas Atuação na sustentação de software (funcionamento da infraestrutura dos sistemas de TI, de modo a evitar qualquer falha que existir, detectando possíveis problemas de segurança, hardware, dentre outros) e na evolução dos programas (aperfeiçoamento)",
+                  documentos: "Declaração de Impacto Institucional: Documento assinado por dirigente da área impactada, atestando a participação, relevância e os resultados da solução aplicada, acompanhado dos atos de implementação da solução na instituição: portarias ou resoluções que formalizam a prática inovadora Relatórios de Implementação: Relatório, devidamente assinado pelos integrantes da solução e pelo dirigente da unidade impactada, detalhando o problema identificado, a solução desenvolvida e o processo de implementação. Deve incluir ainda os dados sobre os resultados obtidos, como redução de custos, otimização de processos ou melhoria de indicadores institucionais. Atos Oficiais ou Portarias: Documentos oficiais que designam os atores envolvidos na criação e/ou desenvolvimento da solução na instituição, acompanhado dos ato de implementação : portarias ou resoluções que formalizam a prática inovadora Certificados de Premiação ou Reconhecimento: Caso a solução tenha sido premiada ou reconhecida por órgãos internos ou externos à instituição, esses documentos podem ser usados como comprovação do impacto e relevância da solução. Declaração do dirigente da unidade.",
+                  unidade: "Por solução (evento)", pontos: 6.25 },
+                { id: 6, saber: "Elaboração de editais", 
+                  descricao: "Participação na organização de congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, debate, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.",
+                  documentos: "Declaração da autoridade competente: Documento que ateste a autoria e a participação do servidor na elaboração de documentos institucionais, junto a cópia ou link do edital, parecer, nota técnica ou chamada pública assinada ou publicada.",
+                  unidade: "Por edital", pontos: 0.125 },
+                { id: 7, saber: "Elaboração de notas técnicas, chamadas públicas, pareceres técnicos, nota informativa, manuais e roteiros técnicos ou documentação similar", 
+                  descricao: "Elaboração de documentos institucionais normativos, orientativos e regulatórios que auxiliam na tomada de decisões, na regulamentação de processos e na comunicação oficial da instituição, tais como editais, notas técnicas, chamadas públicas, pareceres técnicos, notas informativas entre outros de igual natureza. Atuação do servidor técnico-administrativo em grupos ou comissões designadas para a criação, revisão ou atualização de documentos que estabelecem diretrizes, normas e procedimentos dentro de uma instituição. Esses documentos podem incluir regulamentos, políticas, manuais, resoluções e outros normativos que orientam as práticas administrativas e operacionais da instituição",
+                  documentos: "Declaração da autoridade competente: Documento que ateste a autoria e a participação do servidor na elaboração de documentos institucionais, junto a cópia ou link do edital, parecer, nota técnica ou chamada pública assinada ou publicada.",
+                  unidade: "Por notas técnicas, chamadas públicas, pareceres técnicos, nota informativa ou documentação similar", pontos: 1.25 },
+                { id: 8, saber: "Elogio profissional", 
+                  descricao: "Menção nominal e por escrito, concedida ao servidor em razão de atuação destacada em suas funções, com grande relevância e repercussão institucional",
+                  documentos: "Portaria ou certificado registrado em assentamento funcional",
+                  unidade: "Por portaria (evento)", pontos: 1.25 },
+                { id: 9, saber: "Participação como membro de comissão organizadora de processo seletivo, vestibular, concurso ou exames públicos", 
+                  descricao: "Atuação como membro de comissão organizadora de concurso/exame público responsável pelo planejamento do concurso /exame público e gerenciamento de todas as fases do concurso.",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão/entidade organizadora do certame",
+                  unidade: "Por Edital (evento)", pontos: 1 },
+                { id: 10, saber: "Participação como membro de comissão responsável por processo seletivo, vestibular, concurso ou exames públicos", 
+                  descricao: "Atuação como membro de comissões responsáveis pela organização, condução e avaliação de processos seletivos, vestibulares ou concursos públicos. A participação envolve a colaboração em atividades estratégicas, desde a elaboração de editais e critérios de seleção, até a análise de candidatos, avaliação de recursos e impugnações, garantindo a lisura e o cumprimento das normas do processo.",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão/entidade organizadora do certame",
+                  unidade: "Por Edital (evento)", pontos: 1 },
+                { id: 11, saber: "Participação como membro em grupos, núcleos e comissões de políticas públicas inclusivas e afirmativas (heteroidentificação, gênero, diversidade, avaliação socioeconômica, PCD, avaliação de cotas)", 
+                  descricao: "Atuação em comissões voltadas para a implementação, avaliação e fiscalização de políticas públicas inclusivas e afirmativas, tais como: heteroidentificação racial, gênero, diversidade, avaliação socioeconômica, verificação de deficiência, ou comissões de análise de cotas",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão/entidade.",
+                  unidade: "Por declaração ou certificado de participação", pontos: 1 },
+                { id: 12, saber: "Participação como membro em comissões, comitês, grupos de trabalho e grupo de estudos em organizações privadas, entidades profissionais ou organizações da sociedade civil", 
+                  descricao: "Atuação como membro em comissões, comitês, grupos de trabalho e grupo de estudos em organizações privadas, entidades profissionais ou organizações da sociedade civil.",
+                  documentos: "Declaração da organização/entidade privada em que realizou a atividade; Outro documento oficial comprobatório de realização da atividade.",
+                  unidade: "Por declaração/documento oficial de realização da atividade", pontos: 1 },
+                { id: 13, saber: "Participação como membro titular em comissões, comitês e grupos no âmbito da administração pública", 
+                  descricao: "Atuação como membro titular em comissões, comitês e grupos de trabalho, no âmbito da administração pública, destinados à elaboração, revisão ou atualização de normativos institucionais, planos de gestão, políticas públicas e projetos institucionais. Esses grupos podem ser formados para diferentes finalidades, como: Comissões para elaboração de normativos institucionais (regulamentos, portarias, resoluções); Comitês de acompanhamento de programas e projetos institucionais; Grupos de trabalho para implementação de melhorias administrativas e operacionais; Comissões de sindicância, apuração e avaliação de processos internos; Grupos especializados em inovação e desenvolvimento de soluções práticas para a gestão pública.",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão, contendo a informação da natureza da comissão/comitê/grupo de trabalho, bem como o período com início e fim.",
+                  unidade: "Por portaria/declaração Comissão /Comitê/GT (evento)", pontos: 1.25 },
+                { id: 14, saber: "Participação como membro suplente em comissões, comitês, grupos previstos no âmbito da administração pública", 
+                  descricao: "Atuação como membro suplente em comissões, comitês ou grupos de trabalho que estão previstos em Leis, Portarias, Estatutos ou Regimentos implica uma função formal e regulamentada, que exige o cumprimento de um papel específico de acordo com normativos legais ou institucionais, como : - Comissões previstas em estatutos e regimentos internos; - Comitês previstos em Portarias Ministeriais ou Institucionais ; - Grupos de trabalho previstos por Lei ou normativos legais que demandam a atuação de membros titulares com mandato definido.",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão, contendo a informação da natureza da comissão/comitê/grupo de trabalho, bem como o período com início e fim, junto a Portaria, Estatuto, Lei ou Regimento que prevê a instituição",
+                  unidade: "Por portaria/declaração Comissão /Comitê/GT (evento)", pontos: 0.5 },
+                { id: 15, saber: "Participação em brigadas voluntárias de combate a incêndio e pânico e/ou em ações voluntárias", 
+                  descricao: "Atuação em equipes organizadas para prevenção e combate a incêndios e outras atividades típicas como prestar primeiros socorros, auxiliar na realização de cursos e campanhas educativas e auxiliar na realização de operações preventivas contra acidentes, em instituições públicas, incluindo as Instituições Federais de Ensino (IFE), ou instituições privadas, bem como na contenção de crises climáticas e desastres ambientais. Fazer parte da equipe de brigadas de incêndio. Atuação em iniciativas que visam incentivar a participação cidadã em ações voluntárias, promovendo a responsabilidade cívica e social, fortalecendo a solidariedade e o apoio mútuo na sociedade, suprindo lacunas de efetivo em serviços públicos e valorizando a participação cidadã, nos âmbitos cívico, cultural, educacional, científico, recreativo ou de assistência social, atendendo a Política Nacional do Voluntariado e suas regulamentações.",
+                  documentos: "Portaria de designação ou declaração/certidão expedida por qualquer esfera do setor público",
+                  unidade: "Por Ação ou Por participação em Brigada", pontos: 1 },
+                { id: 16, saber: "Participação em comissões de saúde e segurança no trabalho", 
+                  descricao: "Atuação como membro em comissões de saúde e segurança no trabalho na Administração Pública ou em organizações privadas, entidades profissionais ou organizações da sociedade civil.",
+                  documentos: "Portaria de designação expedida pelo órgão; Declaração da organização/entidade privada em que realizou a atividade; ou Outro documento oficial comprobatório de realização da atividade.",
+                  unidade: "Por mandato/designação. (evento)", pontos: 1 },
+                { id: 17, saber: "Participação em conselhos superiores e órgãos colegiados das IFE", 
+                  descricao: "Atuação em conselhos superiores e órgãos colegiados das Instituições Federais de Ensino Superior (IFES), desde que a atuação não resulte de funções ou cargos com participação automática nas reuniões, como reitores ou diretores.",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão, contendo a informação da natureza permanente do conselho/órgão colegiado, bem como o período com início e fim.",
+                  unidade: "Por mandato/designação. (evento)", pontos: 2.5 },
+                { id: 18, saber: "Participação, no exercício do cargo, em Consultorias e Assessoria Técnica Especializada", 
+                  descricao: "Atuação em atividade de consultoria ou de assessoria técnica especializada em projetos institucionais em matérias vinculadas às atribuições do cargo",
+                  documentos: "Declaração da organização/entidade privada em que realizou a atividade; ou Outro documento oficial comprobatório de realização da atividade.",
+                  unidade: "Por consultoria", pontos: 1 },
+                { id: 19, saber: "Participação em programas e políticas públicas externos à instituição", 
+                  descricao: "Atuação em políticas públicas de iniciativa governamental, não governamental ou interinstitucional, que visam à promoção de melhorias sociais, educacionais e administrativas.",
+                  documentos: "Declaração ou certidão de participação pelo órgão ou instituição promotora",
+                  unidade: "Por programas e políticas públicas (evento)", pontos: 1 },
+                { id: 20, saber: "Participação na coordenação/supervisão, fiscalização, logística de preparação e/ou realização de concurso público ou exames públicos", 
+                  descricao: "Atuação em atividades de coordenação, supervisão e fiscalização de concursos públicos ou exames públicos, responsáveis diretos pela organização, controle e garantia da execução adequada das etapas do processo seletivo no local de prova. Participar da logística de preparação e de realização de concurso público que envolva atividades de planejamento, execução e avaliação de resultado.",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão/entidade organizadora do certame",
+                  unidade: "Por Edital (evento)", pontos: 0.625 },
+                { id: 21, saber: "Tempo de efetivo exercício na carreira", 
+                  descricao: "Tempo acumulado de efetivo exercício do servidor na carreira, inclusive o tempo de cessão e/ou colaboração técnica no âmbito do Ministério da Educação e suas entidades vinculadas",
+                  documentos: "Certidão de Tempo de Serviço (CTS): Emitida pela própria IFE, contendo as datas de admissão e desligamento, quando aplicável. Declaração de Exercício Funcional: Documento oficial emitido pela IFE, informando o cargo ocupado, as funções desempenhadas e o período de atuação do servidor. Publicações em Diário Oficial ou Boletins Internos: Publicações que comprovam a nomeação pode servir como comprovação adicional. Termos de Posse e Exoneração: Caso o servidor tenha sido empossado ou exonerado de cargos nas IFE, esses documentos apresentam as datas de início e término da atuação. Ficha Funcional ou Histórico Funcional: Emitido pela área de gestão de pessoas da IFE, contendo o histórico completo do servidor, como movimentações, promoções e funções desempenhadas. Declaração ou certidão de tempo de exercício na instituição com data de início e fim.",
+                  unidade: "Tempo (mês)", pontos: 0.125 },
+                { id: 22, saber: "Tempo de serviço e/ou vínculo empregatício em outras instituições públicas e/ou privadas", 
+                  descricao: "Tempo acumulado de exercício em instituições públicas de qualquer esfera administrativa (municipal, estadual, federal), em cargo efetivo ou contrato temporário. Essa experiência deve ter contribuído para o desenvolvimento de competências profissionais no desempenho das funções administrativas, técnicas ou de apoio, enriquecendo a prática laboral do servidor por meio da vivência em diferentes contextos institucionais. Tempo de exercício no serviço público em outras instituições. Vínculo empregatício atual e/ou finalizado. Tempo de exercício na instituição que atua e/ou atuou concomitante com as IFE. Em instituições pública municipal, estadual, distrital e/ou federal; organizações públicas e privadas; organizações não governamentais; organismos internacionais; instituições paraestatais e/ou empresas privadas. Compreende-se o exercício da docência em diferentes níveis e modalidades da educação básica (educação infantil, ensino fundamental e ensino médio) e ensino superior (graduação tecnológica, licenciatura, bacharelado e/ou curso de formação de natureza vocacional). As modalidades se referem à educação profissional e tecnológica; educação especial; educação indígena; educação a distância; educação do campo; educação quilombola e educação de jovens e adultos. Atuação em disciplinas de estágio supervisionado na educação profissional técnica de nível médio (cursos técnicos de nível médio) e ensino superior (graduação tecnológica, licenciatura e bacharelado), bem como, em componentes curriculares de cursos de licenciatura que exigem a prática de ensino.",
+                  documentos: "Certidão de Tempo de Serviço (CTS): Emitida pela instituição pública onde o servidor prestou serviços anteriormente, contendo as datas de admissão e desligamento, quando aplicável. Declaração de Exercício Funcional: Documento emitido pela instituição, detalhando o cargo ocupado, as funções desempenhadas e o período em que o servidor esteve ativo. Publicações em Diário Oficial ou Boletim Interno: Caso o servidor tenha sido nomeado por meio de publicação oficial, esse documento pode servir como comprovação adicional. Termos de Posse e Exoneração: esses documentos corroboram as datas de início e término da atuação. Declaração ou certidão de tempo de exercício na instituição com data de início e fim.",
+                  unidade: "Tempo (mês)", pontos: 0.05 },
+                { id: 23, saber: "Trabalho desenvolvido em órgãos estatais e/ou paraestatais, escolas de governo, agências reguladoras, organismo internacionais", 
+                  descricao: "Atuação em órgãos estatais e/ou paraestatais (Ex: SESI, SESC, SENAI, SENAC; Organizações Sociais; OSCIP; Entidades de Apoio), Escolas de Governo (instituições públicas criadas com a finalidade de promover a formação, o aperfeiçoamento e a profissionalização de agentes públicos, visando ao fortalecimento e à ampliação da capacidade de execução do Estado, tendo em vista a formulação, a implantação, a execução e a avaliação das políticas públicas), Agências Reguladoras (Instituídas sob a forma de autarquias de regime especial, são agências destinadas a regulamentar, controlar e fiscalizar a execução de serviços públicos transferidos para o setor privado por intermédio de concessões, permissões etc. Ex: Agência Nacional de Telecomunicações (Anatel), Agência Nacional de Energia Elétrica (Aneel) e Agência Nacional do Petróleo (ANP) ou Organismos Internacionais (instituições criadas por países (estados soberanos), regidas por meio de tratados, que buscam através da cooperação a melhoria das condições econômicas, políticas e sociais dos associados. Ex: ONU, OEA, OCDE, OMS, OIT, etc.)",
+                  documentos: "- Declaração ou certidão emitida pelo órgão/escola de governo/agência reguladora/organismo internacional, com data de início e fim; ou - Outro documento oficial comprobatório de realização da atividade.",
+                  unidade: "Ano completo (tempo)", pontos: 0.5 },
+                { id: 24, saber: "Trabalho desenvolvido no âmbito do Ministério da Educação e suas entidades vinculadas (cessão e/ou colaboração técnica)", 
+                  descricao: "Atuação em órgãos da estrutura no âmbito do ministério da educação e suas entidades vinculadas, por meio de cessão e/ou colaboração técnica, contribuindo com sua expertise para atividades e programas estratégicos.",
+                  documentos: "Portaria de cessão publicada em DOU junto a Portaria de conclusão da movimentação quando se aplicar.",
+                  unidade: "Tempo (mês)", pontos: 0.05 },
+                { id: 25, saber: "Participação como membro da gestão e/ou do conselho fiscal, ou comissão sindical e associações vinculadas às IFE", 
+                  descricao: "Atuação como membro de entidades sindicais ou associações representativas de classe, assumindo responsabilidades na gestão, comissões permanentes, fiscalização e defesa dos interesses da categoria.",
+                  documentos: "Declaração expedida pela entidade sindical ou associação indicando a atividade prevista em estatuto/ Declaração expedida pela entidade sindical ou associação atestando o exercício de funções de gestão ou fiscalização, com a especificação da duração do mandato",
+                  unidade: "Por mandato (evento)", pontos: 2.5 },
+                { id: 26, saber: "Participação como membro em comissões permanentes e/ou assessorias instituídas por lei", 
+                  descricao: "Atuação como membro em comissões permanentes e/ou assessorias instituídas por lei",
+                  documentos: "Declaração expedida pela entidade sindical ou associação indicando a atividade prevista em estatuto/ Declaração expedida pela entidade sindical ou associação atestando o exercício de funções de gestão ou fiscalização, com a especificação da duração do mandato",
+                  unidade: "Por mandato (evento)", pontos: 2.5 },
+                { id: 27, saber: "Participação como membro de comissão de consulta/eleitoral", 
+                  descricao: "Atuação como membro de comissões responsáveis pela organização e condução de processos de consulta pública ou eleitoral, seja para a escolha de dirigentes de instituições públicas ou em eleições internas, envolvendo participação ativa em todas as etapas do processo, desde a organização, verificação de elegibilidade, acompanhamento da votação e apuração, até a divulgação dos resultados",
+                  documentos: "Portaria de nomeação para a comissão de consulta ou eleitoral, especificando o cargo ou função exercida. Certidão de participação emitida pela instituição ou entidade responsável, atestando a conclusão dos trabalhos na comissão.",
+                  unidade: "Por consulta/eleição (evento)", pontos: 1 },
+                { id: 28, saber: "Participação como membro em conselho profissional", 
+                  descricao: "Atuação como membro efetivo em conselhos profissionais regulamentados, que são responsáveis pela fiscalização e regulação do exercício de determinadas profissões no Brasil",
+                  documentos: "Certidão ou declaração emitida pelo conselho profissional, atestando a participação como membro durante um mandato específico; Portaria de nomeação ou ata de posse, que formalize a designação do servidor como membro do conselho, com a especificação do período do mandato/Certificado de conclusão do mandato, se aplicável, emitido ao término do período de atuação no conselho.",
+                  unidade: "Mandato (evento)", pontos: 0.5 },
+                { id: 29, saber: "Participação como membro titular e/ou suplente da Comissão Interna de Supervisão da carreira (CIS) e outras comissões correlatas.", 
+                  descricao: "Atuação como membro titular e/ou suplente da Comissão Interna de Supervisão da Carreira (CIS)",
+                  documentos: "Portaria de designação expedida por autoridade competente do órgão/entidade",
+                  unidade: "Por ano de mandato", pontos: 0.5 },
+                { id: 30, saber: "Participação na organização de eventos pedagógicos, educacionais, científicos, tecnológicos, esportivos, sociais, sindical, filantrópicos ou culturais", 
+                  descricao: "Atuação no processo de planejamento e organização de eventos, incluindo a sua concepção (identificação dos objetivos; coleta de informações sobre os participantes, patrocinadores, entidades e outras instituições em potencial; listagem dos resultados desejados; estimativas de exequibilidade econômica e técnica; estimativas de tempo e recursos necessários; estabelecimento de diretrizes; etc.), pré-evento (coordenação executiva e os controles financeiro, técnico-administrativo e social do evento. Ex: escolha do local; definição da data; elaboração de temática e calendário; identificação e análise dos participantes; estratégia de comunicação e marketing; infraestrutura de recursos audiovisuais, materiais e serviços; programação social, cultural e turística; cronograma básico; etc.), per ou transevento (recepcionar os participantes, convidados e autoridades; atender os participantes; preparar com antecedência os impressos e outros materiais necessários ao evento; supervisionar os serviços oferecidos aos participantes, convidados e autoridades; efetuar novas inscrições; entregar materiais aos participantes; entregar os certificados; etc.) e pós-evento (avaliação técnica, administrativa e dos participantes. Ex: questionários de avaliação dos participantes).",
+                  documentos: "Certificado ou Declaração emitida pela instituição de realização do evento",
+                  unidade: "Por certificado / declaração", pontos: 1 },
+                { id: 31, saber: "Representação institucional em conselhos e/ou órgãos municipais, estaduais e federais, organizações sociais, assistenciais e/ou sem fins lucrativos", 
+                  descricao: "Atuação como representante institucional em conselhos e/ou órgãos municipais, estaduais e federais, organizações sociais, assistenciais e/ou sem fins lucrativos",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão/entidade, contendo o período de início e fim.",
+                  unidade: "Por portaria/declaração (evento)", pontos: 1 },
+                { id: 32, saber: "Coordenação/presidência de comissões, comitês, grupos de trabalho ou grupo de estudo na administração pública", 
+                  descricao: "Atuação como coordenador em comissões, comitês ou grupos de trabalho no âmbito da administração pública",
+                  documentos: "Portaria de designação ou declaração expedida pelo órgão, contendo a informação da natureza da comissão/comitê/grupo de trabalho, bem como o período de início e fim",
+                  unidade: "Por portaria/declaração (evento)", pontos: 2.5 },
+                { id: 33, saber: "Atuação do servidor como titular e/ou substituto eventual do titular ocupante de Cargo de Direção (CD) ou equivalente.", 
+                  descricao: "Atuação como titular e/ou substituto eventual de cargos de direção (CD)",
+                  documentos: "Portaria de nomeação + declaração/certidão expedida pelo órgão com data de início e fim.",
+                  unidade: "Tempo (mês)", pontos: 0.25 },
+                { id: 34, saber: "Atuação do servidor como titular e/ou substituto eventual do titular ocupante de Função Gratificada (FG) ou equivalente.", 
+                  descricao: "Atuação como titular e/ou substituto eventual de Função Gratificada (FG)",
+                  documentos: "Portaria de designação + declaração/certidão expedida pelo órgão com data de início e fim.",
+                  unidade: "Tempo (mês)", pontos: 0.125 },
+                { id: 35, saber: "Responsável por setor, unidade ou equipe", 
+                  descricao: "Atuação como responsável por setor ou unidade ou responsável técnico por equipe",
+                  documentos: "Portaria de designação Declaração/certidão expedida pelo órgão com data de início e fim.",
+                  unidade: "Tempo (mês)", pontos: 0.125 },
+                { id: 36, saber: "Proficiência ou curso em LIBRAS e/ou língua estrangeira", 
+                  descricao: "Certificações que comprovem a proficiência ou a participação em cursos de Língua Brasileira de Sinais (LIBRAS) ou de línguas estrangeiras",
+                  documentos: "Certificado de proficiência em LIBRAS emitido por instituições reconhecidas, como o PROLIBRAS, ou em línguas estrangeiras, como TOEFL, IELTS, DELF, DELE ou similares) Certificados de conclusão de cursos de LIBRAS ou de línguas estrangeiras, emitidos por instituições de ensino credenciadas.",
+                  unidade: "Por certificação (evento)", pontos: 5 },
+                { id: 37, saber: "Certificação Profissional na área de atuação", 
+                  descricao: "Certificações profissionais emitidas por instituições reconhecidas, nacionais ou internacionais, que atestem conhecimentos e habilidades específicas relacionadas diretamente à área de atuação do servidor. A certificação deve ser voltada para o aprimoramento técnico ou gerencial, contribuindo para o desenvolvimento de competências que agreguem valor às suas funções e ao desempenho institucional.",
+                  documentos: "Cópia do certificado profissional",
+                  unidade: "Por certificação (evento)", pontos: 1.25 },
+                { id: 38, saber: "Participação em capacitações como instrutor ou conteudista em curso de formação, de desenvolvimento ou de treinamento", 
+                  descricao: "Atuação como responsável pela concepção, elaboração e/ou transmissão de conteúdos em cursos voltados à formação, desenvolvimento ou treinamento. O servidor pode atuar como instrutor, ministrando aulas ou treinamentos, ou como conteudista, desenvolvendo materiais didáticos e programáticos para as capacitações",
+                  documentos: "Certidão ou declaração de participação expedida pelo órgão ou instituição promotora Materiais didáticos produzidos, como apostilas, apresentações ou outros recursos utilizados, quando se aplicar.",
+                  unidade: "Por curso, independente da carga horária (evento)", pontos: 1 },
+                { id: 39, saber: "Participação em capacitações como tutor, monitor, orientador ou mentor em curso de formação, de desenvolvimento ou de treinamento, incluindo tutoria de estágio probatório", 
+                  descricao: "Atuação em funções de suporte, acompanhamento e orientação de participantes em cursos de formação, desenvolvimento ou treinamento, incluindo tutoria de estágio probatório, auxiliando no processo de aprendizagem dos participantes, oferecendo apoio técnico, pedagógico e logístico, sem ser necessariamente o responsável pela criação do conteúdo ou sua apresentação formal.",
+                  documentos: "Certidão ou declaração de participação expedida pelo órgão ou instituição promotora",
+                  unidade: "Por participação, independente da carga horária (evento)", pontos: 0.5 },
+                { id: 40, saber: "Participação em capacitações, incluindo disciplinas isoladas em cursos de graduação e pós-graduação, que desenvolvam competências alinhadas aos objetivos institucionais e/ou que favoreçam a formação continuada no cargo", 
+                  descricao: "Participação em cursos de capacitação, oficinas, seminários, congressos e disciplinas isoladas de graduação ou pós-graduação, diretamente ligados ao desenvolvimento de competências essenciais para o alcance dos objetivos estratégicos institucionais e/ou para o desempenho das atribuições do cargo ocupado.",
+                  documentos: "Certificados de participação ou conclusão emitidos pelas instituições responsáveis pela capacitação (curso, oficina, seminário, congressos, fórum e afins) Certificado ou histórico escolar no qual conste as disciplinas cursadas e as respectivas cargas horárias",
+                  unidade: "Por Carga horária (a cada 10 horas)", pontos: 0.25 },
+                { id: 41, saber: "Títulos de educação formal, diferente do requisito de escolaridade e formação especializada exigidos para o ingresso no cargo ocupado pelo servidor", 
+                  descricao: "Título de educação formal, desde que não seja requisito de ingresso do cargo além daquele que o habilita e define o nível de RSC pretendido, no âmbito do plano de qualificação institucional.",
+                  documentos: "Diplomas revalidados (no caso de títulos obtidos no exterior) que tenham sido reconhecidos por universidades brasileiras, conforme regulamentação do MEC.",
+                  unidade: "Por diploma ou certificado (evento)", pontos: 6.25 },
+                { id: 42, saber: "Autoria de obras artísticas e cultural registradas", 
+                  descricao: "Autoria de obras artísticas e cultural registradas",
+                  documentos: "Registro da obra",
+                  unidade: "Por obra artística e cultura", pontos: 2.5 },
+                { id: 43, saber: "Autor de projeto aprovado em edital de pesquisa e/ou extensão.", 
+                  descricao: "Autoria de Projeto de Pesquisa e/ou Extensão aprovado nas instâncias competentes",
+                  documentos: "Projeto aprovado nas instâncias competentes",
+                  unidade: "Por edital/Projeto", pontos: 2.5 },
+                { id: 44, saber: "Captação de recursos em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou gestão e/ou assistência", 
+                  descricao: "Elaboração de projeto para a captação de recursos, visando o custeio e investimento em pesquisa e desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou gestão e/ou assistência",
+                  documentos: "Projeto aprovado nas instâncias competentes",
+                  unidade: "Por edital/Projeto", pontos: 2.5 },
+                { id: 45, saber: "Carta Patente", 
+                  descricao: "Título de propriedade temporária sobre uma invenção ou modelo de utilidade, outorgado pelo Estado aos inventores ou autores ou outras pessoas físicas ou jurídicas detentoras de direitos sobre a criação",
+                  documentos: "Número de protocolo e situação do pedido no INPI ou em órgão de outro país equivalente ao INPI e documento emitido por um Núcleo de Inovação Tecnológica de instituições públicas comprovando o ineditismo, atividade inventiva, suficiência descritiva e aplicação industrial da patente",
+                  unidade: "Por patente", pontos: 5 },
+                { id: 46, saber: "Contratos de transferência de tecnologia e licenciamento.", 
+                  descricao: "Contrato de transferência de tecnologia e de licenciamento para outorga de direito de uso ou de exploração de criação desenvolvida isoladamente por Instituições Científica, Tecnológica e de Inovação (ICTs) ou por meio de parceria, na qual o servidor esteja envolvido",
+                  documentos: "Cópia do contrato",
+                  unidade: "Por contrato", pontos: 5 },
+                { id: 47, saber: "Coordenação de acordos ou convênios de cooperação", 
+                  descricao: "Atuação na coordenação de acordos ou convênios de cooperação com instituições públicas e privadas para realização de atividades conjuntas de pesquisa científica e tecnológica e de desenvolvimento de tecnologia, produto, serviço ou processo",
+                  documentos: "Cópia do acordo/convênio",
+                  unidade: "Por acordo / convênio", pontos: 2.5 },
+                { id: 48, saber: "Coordenação de elaboração de Projetos Pedagógicos de novos Cursos.", 
+                  descricao: "Atuação na articulação, planejamento, execução e avaliação das ações pedagógicas nos projetos pedagógicos de criação de novos cursos",
+                  documentos: "Cópia do projeto pedagógico",
+                  unidade: "Por projeto", pontos: 2.5 },
+                { id: 49, saber: "Desenvolvimento de projeto gráfico, diagramação ou identidade visual", 
+                  descricao: "Projeto Gráfico (É a técnica de distribuir de forma harmônica os elementos presentes em uma peça de design gráfico) Diagramação (alinhamento do projeto gráfico de modo a ser melhor interpretado). A identidade visual (consiste no conjunto de elementos gráficos que expressam o propósito, missão e valores da sua empresa, sendo responsável por se comunicar com o seu público-alvo de forma simples e atrativa)",
+                  documentos: "Cópia do material final (ou link para acesso) ou declaração expedida pelo órgão",
+                  unidade: "Por projeto", pontos: 1 },
+                { id: 50, saber: "Desenvolvimento de software e sistemas digitais", 
+                  descricao: "Processo de criação, design, IA (Inteligência Artificial), modelos de linguagem naturais, bots e afins, implementação e suporte de software e conteúdos digitais",
+                  documentos: "Certificado de Registro de Programa de Computador ou declaração institucional",
+                  unidade: "Por registro", pontos: 5 },
+                { id: 51, saber: "Edição de mídias técnicas veiculadas em jornais, revistas e sites", 
+                  descricao: "Atuação na edição de mídias técnicas veiculadas em jornais, revistas e sites",
+                  documentos: "Cópia do material final (ou link para acesso) ou declaração expedida pelo órgão",
+                  unidade: "Por item", pontos: 0.1 },
+                { id: 52, saber: "Edição de roteiros para programas de rádio, TV e mídias; eventos institucionais (artísticos, culturais e esportivos)", 
+                  descricao: "Atuação no processo de processo de criação e edição de roteiros para uma variedade de plataformas de mídia, incluindo programas de rádio, televisão e eventos institucionais, como atividades artísticas, culturais e esportivas.",
+                  documentos: "Cópia do material final (ou link para acesso) ou declaração expedida pelo órgão",
+                  unidade: "Por item", pontos: 0.1 },
+                { id: 53, saber: "Edição, organização, revisão, tradução e avaliação/parecer em publicações", 
+                  descricao: "Atuação na edição, organização, revisão, tradução ou avaliação/parecer de publicações, como livros, revistas científicas, periódicos ou relatórios acadêmicos Atuação na produção de material em outra língua, compreendendo em suas diversas fases (pré-produção, tradução e pós-produção)",
+                  documentos: "Certificados ou declarações de participação emitidos por editoras ou instituições responsáveis. Cópia de publicações com crédito de autoria em uma das funções mencionadas (editor, organizador, revisor, tradutor ou avaliador/parecerista). Ficha catalográfica e contracapa dos periódicos/livros contendo o conselho editorial ou declaração emitida pelo responsável pela publicação",
+                  unidade: "Por livro/periódico (evento)", pontos: 1 },
+                { id: 54, saber: "Liderança ou vice-liderança de grupo de pesquisa registrado", 
+                  descricao: "O pesquisador líder de grupo é o personagem que detém a liderança acadêmica e intelectual no seu ambiente de pesquisa. Normalmente, tem a responsabilidade de coordenação e planejamento dos trabalhos de pesquisa do grupo. Sua função aglutina os esforços dos demais pesquisadores e aponta horizontes e novas áreas de atuação dos trabalhos.",
+                  documentos: "- Declaração/Certidão emitida pelo Programa de Pós-Graduação A identificação e cadastro de líderes de grupos é de total responsabilidade da instituição, através do dirigente institucional de pesquisa.",
+                  unidade: "Por grupo de pesquisa", pontos: 2.5 },
+                { id: 55, saber: "Atuação de servidor como avaliador em eventos acadêmicos, científicos, culturais, esportivos e técnicos envolvendo a análise crítica, avaliação e emissão de pareceres sobre trabalhos, projetos ou apresentações realizadas", 
+                  descricao: "Participação como avaliador de TCC, TCR, congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, eventos científicos, técnico, esportivos, sociais, artísticos, culturais e filantrópicos.",
+                  documentos: "Declaração ou Certidão expedida pelo órgão",
+                  unidade: "Por evento", pontos: 1 },
+                { id: 56, saber: "Atividade de avaliação do projeto de ensino e/ou pesquisa e/ou extensão e/ou inovação, verificando se o mesmo foi submetido de forma adequada e de acordo com as normas institucionais, bem como avaliação do projeto em si (critérios de relevância, execução, aspectos formais, metodológicos e teóricos)", 
+                  descricao: "Participação como avaliador/parecerista de projetos de ensino e/ou pesquisa e/ou extensão e/ou inovação, na própria instituição ou em outras instituições.",
+                  documentos: "Declaração ou Certidão expedida pelo órgão",
+                  unidade: "Por projeto", pontos: 1 },
+                { id: 57, saber: "Participação como coordenador de implantação de unidades de ensino", 
+                  descricao: "Atuação do servidor na função de coordenador no processo de criação e desenvolvimento de novas unidades de ensino vinculadas à Rede Federal",
+                  documentos: "Declaração ou Certidão expedida pelo órgão",
+                  unidade: "Por unidade de ensino", pontos: 2.5 },
+                { id: 58, saber: "Participação como coordenador em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou assistência, na própria instituição ou em parceria com outras instituições", 
+                  descricao: "Atuação do servidor na função de coordenador em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou assistência, na própria instituição ou em parceria com outras instituições.",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por projeto", pontos: 2.5 },
+                { id: 59, saber: "Participação como mediador, palestrante, apresentador ou artista em congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, debate, oficina, jornada, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.", 
+                  descricao: "Atuação como mediador, palestrante, apresentador ou artista de congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais e filantrópicos.",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por evento", pontos: 1 },
+                { id: 60, saber: "Participação como membro de equipe de implantação de unidades de ensino.", 
+                  descricao: "Atuação no processo de criação e desenvolvimento de novas unidades de ensino vinculadas à Rede Federal",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por unidade de ensino implantada", pontos: 1 },
+                { id: 61, saber: "Participação como ouvinte ou assistente em congresso, simpósio, fórum, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.", 
+                  descricao: "Atuação como ouvinte ou assistente de congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais e filantrópicos.",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por evento", pontos: 0.125 },
+                { id: 62, saber: "Participação em comissão de elaboração/reformulaçã o de projetos pedagógicos de cursos técnicos integrados ao ensino médio, técnicos concomitantes ou subsequentes, graduação ou pós-graduação cursos de formação inicial e continuada (FIC)", 
+                  descricao: "Atuação na articulação, planejamento, execução e avaliação das ações nos projetos pedagógicos de cursos técnicos integrados ao ensino médio, técnicos concomitantes ou subsequentes, graduação ou pós-graduação e cursos de formação inicial e continuada (FIC)",
+                  documentos: "Cópia do projeto pedagógico + Portaria de designação da comissão",
+                  unidade: "Por projeto", pontos: 0.5 },
+                { id: 63, saber: "Participação em conselhos editoriais", 
+                  descricao: "Atuação como membro de conselhos editoriais de revistas científicas, periódicos ou outras publicações acadêmicas e institucionais.",
+                  documentos: "Ficha catalográfica e contracapa dos periódicos/livros contendo o conselho editorial ou declaração emitida pelo responsável pela publicação",
+                  unidade: "Por livro/periódico (evento)", pontos: 2.5 },
+                { id: 64, saber: "Coordenação de elaboração/reformulaçã de projetos pedagógicos de cursos técnicos integrados ao ensino médio, técnicos concomitantes ou subsequentes, graduação ou pós-graduação", 
+                  descricao: "Atuação na coordenação de projetos pedagógicos de cursos técnicos integrados ao ensino médio, técnicos concomitantes ou subsequentes, graduação ou pós-graduação",
+                  documentos: "Cópia do projeto pedagógico + Portaria de designação da comissão",
+                  unidade: "Por projeto", pontos: 1 },
+                { id: 65, saber: "Participação em grupo de pesquisa registrado", 
+                  descricao: "Participação como coordenador ou colaborador em grupo de pesquisa registrado no CNPQ no âmbito da instituição ou de outra instituição",
+                  documentos: "Declaração da instituição devidamente credenciada pelo órgão responsável em que foi desenvolvida, contendo período de ocorrência, tipo de atividade, local em que foi efetuada e assinatura do responsável pela instituição. Poderá ser apresentado outro documento oficial com pelo coordenador do grupo de pesquisa carimbo e assinatura do responsável pela instituição que comprove a atividade ou declaração expedida",
+                  unidade: "Por projeto", pontos: 1 },
+                { id: 66, saber: "Participação em projeto de implantação/implementação de ambientes de ensino/aprendizagem, laboratórios, oficinas, estúdios, alas ou áreas para práticas esportivas, sociais, artísticos e culturais.", 
+                  descricao: "Atuação em projeto e implantação/implementação de ambientes de ensino/aprendizagem, laboratórios, oficinas, estúdios, alas ou áreas para práticas esportivas, sociais, artísticos e culturais.",
+                  documentos: "Número de protocolo e situação do pedido no INPI ou em órgão de outro país equivalente ao INPI e documento emitido por um Núcleo de Inovação Tecnológica de instituições públicas comprovando o ineditismo, atividade inventiva, suficiência descritiva e aplicada.",
+                  unidade: "Por projeto", pontos: 1 },
+                { id: 67, saber: "Participação em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou assistência, na própria instituição ou em parceria com outras instituições.", 
+                  descricao: "Atuação em projetos de desenvolvimento institucional e/ou ensino e/ou pesquisa e/ou extensão e/ou inovação e/ou assistência, na própria instituição ou em parceria com outras instituições.",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por projeto", pontos: 1 },
+                { id: 68, saber: "Participação na organização de congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais, sindicais e filantrópicos.", 
+                  descricao: "Atuação na concepção, planejamento, execução e avaliação de congresso, simpósio, conferência, colóquio, mesa redonda, workshop, seminário, mostra, feira, minicursos, eventos científicos, técnico, esportivos, sociais, artísticos, culturais e filantrópicos.",
+                  documentos: "Certificados de Participação: Documentos que comprovem a atuação do servidor na organização dos eventos, emitidos pela instituição ou pelo comitê organizador. Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por evento", pontos: 1.25 },
+                { id: 69, saber: "Participação no desenvolvimento de protótipos, depósitos e/ou registros de propriedade intelectual.", 
+                  descricao: "Atuação em processos que visam a criação, proteção e formalização de inovações, invenções, designs ou criações originais",
+                  documentos: "Declarações de Instituições: Documento formal emitido por instituição ou empresa que confirme a contribuição do servidor em projetos de pesquisa e desenvolvimento (P&D) e registro de propriedade intelectual.",
+                  unidade: "Por projeto", pontos: 2.5 },
+                { id: 70, saber: "Prêmio de mérito profissional ou acadêmico, comendas, homenagens e menções honrosas", 
+                  descricao: "Honrarias atribuídas em decorrência de destaque em desempenho acadêmico ou profissional com a concessão de medalhas, diplomas, comendas ou homenagens para destacar os atos e/ou atividades reconhecidas como merecedoras de mérito.",
+                  documentos: "Por premiação, comenda, homenagem e/ou menção honrosa.",
+                  unidade: "Por premiação, comenda, homenagem e/ou menção honrosa", pontos: 3.125 },
+                { id: 71, saber: "Produção de material audiovisual", 
+                  descricao: "Criação de comunicações que combinam elementos visuais e sons sincronizados desde a sua concepção até a sua finalização, englobando o conjunto de todas as fases necessárias para a realização de um vídeo ou produto equivalente, e que requer organização e planejamento (ex: filmes, videoclipes, documentários, Vinhetas, Vídeos publicitários institucionais/Teaser, campanhas institucionais, edital em língua brasileira de sinais, Vídeos promocionais de projetos e ações institucionais, Filmagem e registro de eventos ou atividades institucionais, etc.)",
+                  documentos: "Cópia do material final (ou link para acesso) ou declaração expedida pelo órgão",
+                  unidade: "Por Projeto", pontos: 1 },
+                { id: 72, saber: "Publicação de artigos, trabalho completo e capítulo de livro (com ISBN e Conselho Editorial)", 
+                  descricao: "Atividade de publicação de diversos tipos de produções intelectuais e acadêmicas que contribuem para a disseminação do conhecimento em uma determinada área de atuação, tais como: artigo, resumo expandido, resumo, capítulo de livro. Todos esses tipos de publicações devem ser acompanhados de um ISBN (International Standard Book Number), que identifica de maneira única a obra, e de um Conselho Editorial, que assegura a qualidade e a relevância do conteúdo publicado",
+                  documentos: "Artigo em periódico: cópia da capa do periódico, caso haja, e a íntegra do trabalho, incluindo número do ISSN e/ou DOI Capítulo de livro: cópia da capa do livro, da ficha catalográfica, contendo as informações essenciais para identificação da obra, incluindo número ISBN, e do capítulo publicado",
+                  unidade: "Por publicação (evento)", pontos: 1.5 },
+                { id: 73, saber: "Publicação de livro (com ISBN e Conselho Editorial)", 
+                  descricao: "Atividade de publicação de livro. Devem ser acompanhados de um ISBN (International Standard Book Number), que identifica de maneira única a obra, e de um Conselho Editorial, que assegura a qualidade e a relevância do conteúdo publicado",
+                  documentos: "Livro: cópia da capa do livro, Conselho Editorial e da ficha catalográfica, contendo as informações essenciais para identificação da publicação e/ou organização, incluindo número ISBN Ebook: Serão considerados os livros publicados em meio virtual (e-books), sendo a definição de livro a estabelecida pela Associação Brasileira de Normas Técnicas (ABNT) na NBR6029, a saber: publicação não periódica, que contém acima de 49 páginas, excluídas as capas e que é objeto de ISBN",
+                  unidade: "Por publicação (evento)", pontos: 2.5 },
+                { id: 74, saber: "Avaliador de curso pelo INEP ou pelo MEC", 
+                  descricao: "Atuar como avaliador nas comissões responsáveis pela avaliação externa in loco dos cursos de graduação e das instituições de educação superior, bem como do desempenho dos estudantes, por meio do Exame Nacional de Desempenho de Estudantes (Enade).",
+                  documentos: "Declaração ou certidão expedida pelo órgão avaliador",
+                  unidade: "Por avaliação", pontos: 2.5 },
+                { id: 75, saber: "Elaboração, revisão e/ou correção de provas de exame de seleção, vestibular ou concursos", 
+                  descricao: "Elaborar questões de provas em processos seletivos simplificados, vestibular ou equivalente ou em concursos públicos para provimento de cargo efetivo Realizar a revisão e/ou correções de questões de provas em processos seletivos simplificados, vestibular ou equivalente ou em concursos públicos para provimento de cargo efetivo",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por edital", pontos: 1 },
+                { id: 76, saber: "Participação como jurado na área de atuação", 
+                  descricao: "Participar na condição de jurado em concursos, eventos e similares na sua área de conhecimento/atuação",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por evento", pontos: 0.5 },
+                { id: 77, saber: "Participação como orientador das monitorias de disciplinas e nas unidades de produção e laboratórios.", 
+                  descricao: "Participar como orientador das monitorias de disciplinas e nas unidades de produção e laboratórios.",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por orientação", pontos: 0.5 },
+                { id: 78, saber: "Participação como orientador de bolsistas de apoio técnico.", 
+                  descricao: "Participar como orientador de bolsistas de apoio técnico",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por orientação", pontos: 0.5 },
+                { id: 79, saber: "Participação como orientador/supervisor de estágios supervisionados.", 
+                  descricao: "Participar como orientador/supervisor nos estágios supervisionados",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por orientação/supervisão", pontos: 0.5 },
+                { id: 80, saber: "Participação como preceptor em residências acadêmicas", 
+                  descricao: "Participar como preceptor nas residências acadêmicas, supervisionando diretamente as atividades práticas feitas pelos residentes.",
+                  documentos: "Declaração ou certidão expedida pelo órgão.",
+                  unidade: "Por precepção", pontos: 1 },
+                { id: 81, saber: "Participação no apoio a atividades de preceptoria em residências médica e multiprofissional", 
+                  descricao: "Atuação na orientação de internos e residentes nas condutas do setor e para a utilização dos sistemas eletrônicos dos Hospitais Universitários.",
+                  documentos: "Declaração ou certidão expedida pelo órgão, constando a unidade de serviço do servidor e o período semestral em que ocorreu a atividade.",
+                  unidade: "Por declaração semestral", pontos: 0.1 },
+                { id: 82, saber: "Participação em situações de surtos, epidemias e pandemias", 
+                  descricao: "Atuação em ações de campo, como investigações de surtos, monitoramento de eventos de massa e inquéritos, assim como nas respostas requeridas para prevenir, proteger e controlar a ocorrência ou propagação de casos novos de uma doença ou agravo que pode colocar a população humana e animal sob risco e representar ameaças à saúde pública.",
+                  documentos: "Portaria de designação ou declaração ou certidão expedida por qualquer esfera do setor de Saúde e/ou expedido por órgão vinculado a Administração da IFE.",
+                  unidade: "Tempo (mês)", pontos: 0.5 },
+                { id: 83, saber: "Participação em políticas, programas e ações de promoção da saúde.", 
+                  descricao: "Atuação na formulação, implementação, avaliação e/ou reformulação de planos, estratégias, programas ou projetos de saúde que visem promover a equidade e a melhoria das condições e modos de viver, ampliando a potencialidade da saúde individual e da saúde coletiva, reduzindo vulnerabilidades e riscos à saúde decorrentes dos determinantes sociais, econômicos, políticos, culturais e ambientais. Tratam-se de ações de promoção da saúde previstas pelo Plano Nacional de Saúde, pelos pactos interfederativos e planejamento estratégico do Ministério da Saúde, bem como por acordos internacionais firmados pelo governo brasileiro, em permanente diálogo com as demais políticas, com os outros setores e com as especificidades sanitárias, tais como: imunização vacinal, formação e educação permanente, alimentação adequada e saudável, práticas corporais e atividades físicas, enfrentamento do uso do tabaco e seus derivados, enfrentamento do uso abusivo de álcool e outras drogas, promoção da mobilidade segura, promoção da cultura da paz e de direitos humanos, promoção do desenvolvimento sustentável, dentre outros.",
+                  documentos: "Portaria de designação ou declaração ou certidão expedida por qualquer esfera do setor de Saúde e/ou expedido por órgão vinculado a Administração da IFE.",
+                  unidade: "Por programa, plano, projeto e/ou ação.", pontos: 1.5 },
+                { id: 84, saber: "Acolhimento em Saúde Mental, Atendimento em necessidades específicas e Humanização do Atendimento.", 
+                  descricao: "Atuar diretamente com discentes, docentes e técnico-administrativos com objetivo de favorecer processos de aprendizagem, atuar em situações emergenciais de saúde mental de discentes, docentes e técnico-administrativos, atendimento de necessidades específicas, mediar situações de conflitos na comunidade institucional, participar de reuniões psicossociais visando a promoção de melhores condições de permanência estudantil, atuar no acolhimento a pessoas em sofrimento psíquico na instituição. Atender e/ou encaminhar situações de vulnerabilidade e sofrimento psíquico vividas pelos usuários dos serviços das IFE, bem como por seus familiares.",
+                  documentos: "Protocolo e/ou registro de atendimento/encaminhamento. Portaria de designação ou declaração ou certidão expedida por qualquer esfera do setor de Saúde e/ou expedido por órgão vinculado a Administração da IFE.",
+                  unidade: "Atendimento/encaminhamento e/ou participação em programa, plano, projeto e/ou ação de humanização.", pontos: 0.05 },
+                { id: 85, saber: "Atuação em áreas hospitalares críticas e semicríticas", 
+                  descricao: "Atuação do servidor em áreas hospitalares que oferecem maior risco de transmissão de infecções, áreas em que se realizam um grande número de procedimentos invasivos e/ou que possuem pacientes humanos e animais de alto risco, com sistema imunológico comprometido, ou ainda, aquelas áreas que por suas especificidades necessitam que seja minimizada a presença de microrganismos patogênicos, tais como: Centro Cirúrgico e Obstétrico, Recuperação pós-anestésica, Central de material esterilizado, Unidade de Terapia Intensiva, Unidade de Isolamento, Unidade de Transplantes, Unidade de Hemodiálise, Pronto Socorro, Berçário, Expurgo, Laboratórios de Análises Clínicas, Anatomia Patológica e Biologia Molecular, Banco de Sangue, Áreas de preparo e manipulação de alimentos e dietas, Sala de preparo de Nutrição Parenteral, Sala de preparo de Quimioterapia, Sala de procedimentos invasivos, Farmácia de manipulação, área suja da Lavanderia, Necrotério e similares. Atuação do servidor em áreas hospitalares ocupadas por pacientes humanos e animais com doenças infecciosas de baixa transmissibilidade e doenças não infecciosas, tais como: Unidade de Internação, Unidade de Atendimento Ambulatorial, Sala de Triagem e Espera, Centro de Radiodiagnóstico e similares.",
+                  documentos: "Portaria de localização ou declaração ou certidão expedida pelo órgão, constando o ambiente laboral e o tempo em que o servidor exerce suas atividades.",
+                  unidade: "Tempo (mês)", pontos: 0.05 },
+                { id: 86, saber: "Atuação em atividades de campo e saídas pedagógicas", 
+                  descricao: "Atuação em atividades de campo e saídas pedagógicas, acompanhando estudantes, em conjunto com o corpo docente em atividades como: apoio à coleta de dados, observação e análise de comunidades, espaços urbanos, edificações ou fenômenos sociais para análise e registro, levantamentos e mapeamentos, estudos de caso em campo, práticas agrícolas, florestais, geológicas, geográficas e biológicas, projetos de extensão comunitária, visitas técnicas e guiadas a indústrias, laboratórios avançados, centros de pesquisa, obras em andamento, museus, teatros, exposições literárias ou eventos técnicos para expor os alunos a diferentes realidades profissionais e tecnologias.",
+                  documentos: "Registro da atividade de campo, lista de presença, declaração ou certidão expedida pela IFE",
+                  unidade: "Por atividade de campo ou saída pedagógica", pontos: 0.25 },
+                { id: 87, saber: "Participação em políticas, programas e ações de promoção da inclusão, acessibilidade e da diversidade", 
+                  descricao: "Participação em políticas, programas e ações de promoção da inclusão, de gênero, da diversidade, de questões étnico-raciais, indígenas, pessoas com necessidades específicas e direitos humanos.",
+                  documentos: "Portaria de designação ou declaração ou certidão expedida pela IFE.",
+                  unidade: "Por programa, plano, projeto e/ou ação.", pontos: 1.5 },
+                { id: 88, saber: "Atuação em atividades de execução / operação, desenvolvimento, colaboração ou treinamento nos sistemas estruturadores do Governo Federal", 
+                  descricao: "Atuação em atividades de execução / operação, desenvolvimento, colaboração ou treinamento nos sistemas estruturadores do Governo Federal nas suas diversas áreas de atuação como planejamento, orçamento, finanças, pessoal, compras, logística e controle, ensino, pesquisa e extensão.",
+                  documentos: "Portaria de designação ou declaração ou certidão expedida pela IFE, Cadastro ou Termo de Responsabilidade.",
+                  unidade: "Tempo (mês)", pontos: 0.5 },
+                { id: 89, saber: "Produção, tradução e interpretação de materiais acessíveis", 
+                  descricao: "Produção de materiais acessíveis ou atuação em tradução/interpretação para acessibilidade em atividades pedagógicos, eventos e cursos.",
+                  documentos: "O material produzido, identificando a autoria ou a declaração da Chefia, Supervisores, Gestores ou Coordenadores da autoria do material produzido, traduzido ou interpretado",
+                  unidade: "Por material produzido, interpretado ou traduzido", pontos: 1 }
             ];
 
-            // Data for RSC levels and their requirements
+            // Dados para os níveis RSC
             const rscLevels = [
-                { level: "RSC-1", prerequisite: "Fundamental Incompleto", minItems: 2, minPoints: 10, iq: "IQ Fundamental Completo (10%)" },
-                { level: "RSC-2", prerequisite: "Fundamental Completo", minItems: 3, minPoints: 20, iq: "IQ Médio (20%)" },
-                { level: "RSC-3", prerequisite: "Médio/Técnico", minItems: 4, minPoints: 25, iq: "IQ Graduação (25%)" },
-                { level: "RSC-4", prerequisite: "Graduação", minItems: 5, minPoints: 30, iq: "IQ Especialização (30%)" },
-                { level: "RSC-5", prerequisite: "Pós-graduação", minItems: 8, minPoints: 52, iq: "IQ Mestrado (52%)" },
-                { level: "RSC-6", prerequisite: "Mestrado", minItems: 12, minPoints: 75, iq: "IQ Doutorado (75%)" }
+                { level: "RSC-1", prerequisite: "Fundamental Incompleto", minItems: 2, minPoints: 10, iq: "IQ Fundamental Completo 10%" },
+                { level: "RSC-2", prerequisite: "Fundamental Completo", minItems: 3, minPoints: 20, iq: "IQ Médio 20%" },
+                { level: "RSC-3", prerequisite: "Médio/Técnico", minItems: 4, minPoints: 25, iq: "IQ Graduação 25%" },
+                { level: "RSC-4", prerequisite: "Graduação", minItems: 5, minPoints: 30, iq: "IQ Especialização 30%" },
+                { level: "RSC-5", prerequisite: "Pós-graduação", minItems: 8, minPoints: 52, iq: "IQ Mestrado 52%" },
+                { level: "RSC-6", prerequisite: "Mestrado", minItems: 12, minPoints: 75, iq: "IQ Doutorado 75%" }
             ];
 
-            // Store current quantities for each item
-            const itemQuantities = new Array(rscData.length).fill(0);
-            const itemScores = new Array(rscData.length).fill(0);
+            // Armazenar quantidades e pontuações atuais
+            let itemQuantities = new Array(rscData.length).fill(0);
+            let itemScores = new Array(rscData.length).fill(0);
+            let currentSortColumn = null;
+            let currentSortDirection = 'asc';
+            let initialRscDataOrder = [...rscData]; // Salva a ordem inicial dos dados
 
-            // Function to render RSC items in the table
-            function renderRscItems() {
-                rscItemsContainer.innerHTML = ''; // Clear previous content
-                rscData.forEach((item, index) => {
+            // Função para renderizar os itens RSC na tabela
+            function renderRscItems(filteredData = rscData) {
+                rscItemsContainer.innerHTML = '';
+                filteredData.forEach((item, indexInFiltered) => {
+                    // Encontra o índice original do item para acessar itemQuantities e itemScores
+                    const originalIndex = rscData.findIndex(d => d.id === item.id);
+
                     const row = document.createElement('tr');
                     row.className = 'table-row';
+                    
+                    // Prepara os dados para mobile
+                    const rowData = {
+                        id: item.id,
+                        saber: item.saber + (item.descricao ? `
+                            <span class="tooltip-container">
+                                <i class="fas fa-info-circle tooltip-icon"></i>
+                                <span class="tooltip-text">${item.descricao}</span>
+                            </span>` : ''),
+                        documentos: item.documentos,
+                        unidade: item.unidade,
+                        pontos: item.pontos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 }),
+                        quantidade: `<input type="number" id="qty-${item.id}" class="input-field" value="${itemQuantities[originalIndex]}" min="0" step="any" inputmode="decimal">
+                                    <span id="error-${item.id}" class="error-message">Apenas números positivos.</span>`,
+                        total: itemScores[originalIndex].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })
+                    };
+                    
+                    // Cria as células da tabela
                     row.innerHTML = `
-                        <td>${item.id}</td>
-                        <td>${item.saber}</td>
-                        <td>${item.unidade}</td>
-                        <td>${item.pontos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })}</td>
-                        <td>
-                            <input type="number" id="qty-${item.id}" class="input-field" value="${itemQuantities[index]}" min="0" step="any">
-                        </td>
-                        <td id="total-item-score-${item.id}">${itemScores[index].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })}</td>
+                        <td data-label="Nº">${rowData.id}</td>
+                        <td data-label="Saber e Competência">${rowData.saber}</td>
+                        <td data-label="Documentos Comprobatórios">${rowData.documentos}</td>
+                        <td data-label="Unidade de Medida">${rowData.unidade}</td>
+                        <td data-label="Pontuação por Unidade">${rowData.pontos}</td>
+                        <td data-label="Quantidade">${rowData.quantidade}</td>
+                        <td data-label="Pontuação Total" id="total-item-score-${item.id}">${rowData.total}</td>
                     `;
+                    
                     rscItemsContainer.appendChild(row);
 
-                    // Add event listener to the input field
                     const inputElement = row.querySelector(`#qty-${item.id}`);
+                    const errorMessageElement = row.querySelector(`#error-${item.id}`);
+
                     inputElement.addEventListener('input', (event) => {
-                        let value = parseFloat(event.target.value);
-                        if (isNaN(value) || value < 0) {
-                            value = 0;
+                        let value = event.target.value.replace(',', '.'); // Permite vírgula para decimal
+                        let parsedValue = parseFloat(value);
+
+                        if (isNaN(parsedValue) || parsedValue < 0 || value.trim() === '') {
+                            event.target.classList.add('input-error');
+                            errorMessageElement.style.display = 'block';
+                            itemQuantities[originalIndex] = 0; // Zera a quantidade no cálculo se for inválido
+                        } else {
+                            event.target.classList.remove('input-error');
+                            errorMessageElement.style.display = 'none';
+                            itemQuantities[originalIndex] = parsedValue;
                         }
-                        itemQuantities[index] = value;
                         calculateTotalScore();
                     });
+
+                    // Garante que o inputmode é decimal para teclados móveis
+                    inputElement.setAttribute('inputmode', 'decimal');
                 });
             }
 
-            // Function to calculate total score and update display
+            // Função para calcular pontuação total e atualizar display
             function calculateTotalScore() {
                 let totalScore = 0;
                 let countedItems = 0;
@@ -315,7 +888,6 @@
                     itemScores[index] = score;
                     totalScore += score;
 
-                    // Update individual item score display
                     const totalItemScoreElement = document.getElementById(`total-item-score-${item.id}`);
                     if (totalItemScoreElement) {
                         totalItemScoreElement.textContent = score.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 });
@@ -332,9 +904,12 @@
                 updateRscLevels(totalScore, countedItems);
             }
 
-            // Function to update RSC level display based on current score and items
+            // Função para atualizar display dos níveis RSC
+            let previousMetLevels = new Set(); // Para controlar a animação
             function updateRscLevels(currentScore, currentItems) {
-                rscLevelsContainer.innerHTML = ''; // Clear previous content
+                rscLevelsContainer.innerHTML = '';
+                let currentMetLevels = new Set();
+
                 rscLevels.forEach(level => {
                     const metPoints = currentScore >= level.minPoints;
                     const metItems = currentItems >= level.minItems;
@@ -342,22 +917,118 @@
 
                     const levelBox = document.createElement('div');
                     levelBox.className = `rsc-level-box ${isMet ? 'met' : 'not-met'}`;
+
+                    // Adiciona classe de animação se o nível foi recém-atingido
+                    if (isMet && !previousMetLevels.has(level.level)) {
+                        levelBox.classList.add('pulse-animation');
+                    }
+                    if (isMet) {
+                        currentMetLevels.add(level.level);
+                    }
+
                     levelBox.innerHTML = `
                         <div>
                             <p class="text-sm">${level.level} (${level.iq})</p>
                             <p class="text-lg font-bold">${level.prerequisite}</p>
                         </div>
-                        <div class="text-right">
-                            <p class="text-sm">Pontos: ${currentScore.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} / ${level.minPoints}</p>
-                            <p class="text-sm">Itens: ${currentItems} / ${level.minItems}</p>
-                            <p class="text-sm mt-1">${isMet ? '✅ Atendido' : '❌ Não Atendido'}</p>
+                        <div class="text-right flex items-center">
+                            <div>
+                                <p class="text-sm">Pontos: ${currentScore.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })} / ${level.minPoints}</p>
+                                <p class="text-sm">Itens: ${currentItems} / ${level.minItems}</p>
+                            </div>
+                            <span class="status-icon ml-2">
+                                ${isMet ? '<i class="fas fa-check-circle text-ifpe-verde-principal"></i>' : '<i class="fas fa-times-circle text-ifpe-vermelho-principal"></i>'}
+                            </span>
                         </div>
                     `;
                     rscLevelsContainer.appendChild(levelBox);
                 });
+                previousMetLevels = currentMetLevels; // Atualiza os níveis atingidos
             }
 
-            // Initial render and calculation
+            // Função para limpar todas as pontuações
+            function clearAllScores() {
+                itemQuantities.fill(0);
+                itemScores.fill(0);
+                renderRscItems(); // Re-renderiza para zerar inputs
+                calculateTotalScore(); // Recalcula para atualizar totais
+                // Limpa quaisquer mensagens de erro
+                document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+                document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+                searchInput.value = ''; // Limpa o campo de busca
+                renderRscItems(); // Re-renderiza sem filtro
+            }
+
+            // Função de busca
+            function filterRscItems() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const filteredData = rscData.filter(item =>
+                    item.saber.toLowerCase().includes(searchTerm) ||
+                    item.id.toString().includes(searchTerm)
+                );
+                renderRscItems(filteredData);
+            }
+
+            // Variáveis para ordenação
+            let currentSortedData = [...rscData]; // Dados atualmente ordenados/filtrados
+            let lastSortedColumn = null;
+            let sortDirection = 'asc';
+
+            // Função de ordenação
+            function sortTable(column) {
+                if (lastSortedColumn === column) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortDirection = 'asc';
+                    if (lastSortedColumn) { // Limpa a classe do cabeçalho anterior
+                        document.querySelector(`[data-sort="${lastSortedColumn}"]`).classList.remove('sorted-asc', 'sorted-desc');
+                    }
+                }
+                lastSortedColumn = column;
+
+                // Remove classes de ordenação de todos os cabeçalhos
+                document.querySelectorAll('.table-header th').forEach(th => {
+                    th.classList.remove('sorted-asc', 'sorted-desc');
+                });
+                // Adiciona a classe de ordenação ao cabeçalho clicado
+                const clickedHeader = document.querySelector(`[data-sort="${column}"]`);
+                clickedHeader.classList.add(`sorted-${sortDirection}`);
+
+
+                currentSortedData.sort((a, b) => {
+                    let valA, valB;
+
+                    // Para ordenar pela pontuação total, precisamos calcular
+                    if (column === 'total') {
+                        const originalIndexA = rscData.findIndex(d => d.id === a.id);
+                        const originalIndexB = rscData.findIndex(d => d.id === b.id);
+                        valA = itemQuantities[originalIndexA] * a.pontos;
+                        valB = itemQuantities[originalIndexB] * b.pontos;
+                    } else {
+                        valA = a[column];
+                        valB = b[column];
+                    }
+
+
+                    if (typeof valA === 'string') {
+                        return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    } else {
+                        return sortDirection === 'asc' ? valA - valB : valB - valA;
+                    }
+                });
+                renderRscItems(currentSortedData); // Renderiza os dados ordenados
+            }
+
+            // Adiciona event listeners
+            clearButton.addEventListener('click', clearAllScores);
+            searchInput.addEventListener('input', filterRscItems);
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    sortTable(header.dataset.sort);
+                });
+            });
+
+            // Renderização e cálculo iniciais
             renderRscItems();
             calculateTotalScore();
         });
