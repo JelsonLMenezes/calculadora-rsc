@@ -193,7 +193,6 @@
             display: inline-block;
             margin-left: 0.5rem;
             cursor: pointer;
-            z-index: 10; /* Garante que o tooltip fique acima de outros elementos */
         }
         .tooltip-icon {
             color: var(--ifpe-azul-principal);
@@ -207,18 +206,19 @@
             border-radius: 0.5rem;
             padding: 0.75rem;
             position: absolute;
-            z-index: 100; /* Valor alto para garantir que fique acima de tudo */
-            bottom: 125%;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.3s;
+            z-index: 100;
             width: 300px;
-            max-width: 90vw; /* Limita a largura em dispositivos móveis */
+            max-width: 90vw;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             font-size: 0.875rem;
             line-height: 1.4;
-            pointer-events: none; /* Permite clicar através do tooltip quando visível */
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 10px;
         }
         .tooltip-container:hover .tooltip-text {
             visibility: visible;
@@ -233,6 +233,40 @@
             border-width: 5px;
             border-style: solid;
             border-color: var(--ifpe-azul-principal) transparent transparent transparent;
+        }
+
+        /* Ajustes para tooltips na tabela */
+        table .tooltip-text {
+            max-width: 250px;
+            left: auto;
+            right: 0;
+            transform: none;
+        }
+
+        table .tooltip-text::after {
+            left: auto;
+            right: 10px;
+        }
+
+        /* Ajuste para tooltips na coluna "Saber e Competência" */
+        table td:nth-child(2) .tooltip-text {
+            left: 0;
+            right: auto;
+            transform: none;
+        }
+
+        table td:nth-child(2) .tooltip-text::after {
+            left: 10px;
+            right: auto;
+        }
+
+        /* Ajuste para permitir que tooltips saiam do container da tabela */
+        .card.overflow-x-auto {
+            overflow: visible;
+        }
+
+        table {
+            position: relative;
         }
 
         /* Estilos responsivos para a tabela */
@@ -337,13 +371,14 @@
             /* Ajuste para tooltips em mobile */
             .tooltip-text {
                 width: 250px;
-                left: 100%;
-                transform: translateX(-100%);
+                left: 0;
+                right: auto;
+                transform: none;
             }
             
             .tooltip-text::after {
-                left: 100%;
-                margin-left: -10px;
+                left: 10px;
+                right: auto;
             }
         }
     </style>
@@ -813,18 +848,20 @@
             let currentSortColumn = null;
             let currentSortDirection = 'asc';
             let initialRscDataOrder = [...rscData]; // Salva a ordem inicial dos dados
+            let currentSortedData = [...rscData]; // Dados atualmente ordenados/filtrados
+            let lastSortedColumn = null;
+            let sortDirection = 'asc';
 
             // Função para renderizar os itens RSC na tabela
             function renderRscItems(filteredData = rscData) {
                 rscItemsContainer.innerHTML = '';
+                currentSortedData = [...filteredData]; // Atualiza os dados atuais
+                
                 filteredData.forEach((item, indexInFiltered) => {
-                    // Encontra o índice original do item para acessar itemQuantities e itemScores
                     const originalIndex = rscData.findIndex(d => d.id === item.id);
-
                     const row = document.createElement('tr');
                     row.className = 'table-row';
                     
-                    // Prepara os dados para mobile
                     const rowData = {
                         id: item.id,
                         saber: item.saber + (item.descricao ? `
@@ -840,7 +877,6 @@
                         total: itemScores[originalIndex].toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 3 })
                     };
                     
-                    // Cria as células da tabela
                     row.innerHTML = `
                         <td data-label="Nº">${rowData.id}</td>
                         <td data-label="Saber e Competência">${rowData.saber}</td>
@@ -857,13 +893,17 @@
                     const errorMessageElement = row.querySelector(`#error-${item.id}`);
 
                     inputElement.addEventListener('input', (event) => {
-                        let value = event.target.value.replace(',', '.'); // Permite vírgula para decimal
+                        let value = event.target.value.replace(',', '.');
                         let parsedValue = parseFloat(value);
 
-                        if (isNaN(parsedValue) || parsedValue < 0 || value.trim() === '') {
+                        if (isNaN(parsedValue)) {
+                            parsedValue = 0;
+                        }
+
+                        if (parsedValue < 0 || value.trim() === '') {
                             event.target.classList.add('input-error');
                             errorMessageElement.style.display = 'block';
-                            itemQuantities[originalIndex] = 0; // Zera a quantidade no cálculo se for inválido
+                            itemQuantities[originalIndex] = 0;
                         } else {
                             event.target.classList.remove('input-error');
                             errorMessageElement.style.display = 'none';
@@ -872,9 +912,10 @@
                         calculateTotalScore();
                     });
 
-                    // Garante que o inputmode é decimal para teclados móveis
                     inputElement.setAttribute('inputmode', 'decimal');
                 });
+                
+                adjustTooltipPosition(); // Ajusta a posição dos tooltips após renderizar
             }
 
             // Função para calcular pontuação total e atualizar display
@@ -905,7 +946,7 @@
             }
 
             // Função para atualizar display dos níveis RSC
-            let previousMetLevels = new Set(); // Para controlar a animação
+            let previousMetLevels = new Set();
             function updateRscLevels(currentScore, currentItems) {
                 rscLevelsContainer.innerHTML = '';
                 let currentMetLevels = new Set();
@@ -918,7 +959,6 @@
                     const levelBox = document.createElement('div');
                     levelBox.className = `rsc-level-box ${isMet ? 'met' : 'not-met'}`;
 
-                    // Adiciona classe de animação se o nível foi recém-atingido
                     if (isMet && !previousMetLevels.has(level.level)) {
                         levelBox.classList.add('pulse-animation');
                     }
@@ -943,20 +983,19 @@
                     `;
                     rscLevelsContainer.appendChild(levelBox);
                 });
-                previousMetLevels = currentMetLevels; // Atualiza os níveis atingidos
+                previousMetLevels = currentMetLevels;
             }
 
             // Função para limpar todas as pontuações
             function clearAllScores() {
                 itemQuantities.fill(0);
                 itemScores.fill(0);
-                renderRscItems(); // Re-renderiza para zerar inputs
-                calculateTotalScore(); // Recalcula para atualizar totais
-                // Limpa quaisquer mensagens de erro
+                renderRscItems();
+                calculateTotalScore();
                 document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
                 document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
-                searchInput.value = ''; // Limpa o campo de busca
-                renderRscItems(); // Re-renderiza sem filtro
+                searchInput.value = '';
+                renderRscItems();
             }
 
             // Função de busca
@@ -969,36 +1008,28 @@
                 renderRscItems(filteredData);
             }
 
-            // Variáveis para ordenação
-            let currentSortedData = [...rscData]; // Dados atualmente ordenados/filtrados
-            let lastSortedColumn = null;
-            let sortDirection = 'asc';
-
             // Função de ordenação
             function sortTable(column) {
                 if (lastSortedColumn === column) {
                     sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
                 } else {
                     sortDirection = 'asc';
-                    if (lastSortedColumn) { // Limpa a classe do cabeçalho anterior
+                    if (lastSortedColumn) {
                         document.querySelector(`[data-sort="${lastSortedColumn}"]`).classList.remove('sorted-asc', 'sorted-desc');
                     }
                 }
                 lastSortedColumn = column;
 
-                // Remove classes de ordenação de todos os cabeçalhos
                 document.querySelectorAll('.table-header th').forEach(th => {
                     th.classList.remove('sorted-asc', 'sorted-desc');
                 });
-                // Adiciona a classe de ordenação ao cabeçalho clicado
+                
                 const clickedHeader = document.querySelector(`[data-sort="${column}"]`);
                 clickedHeader.classList.add(`sorted-${sortDirection}`);
-
 
                 currentSortedData.sort((a, b) => {
                     let valA, valB;
 
-                    // Para ordenar pela pontuação total, precisamos calcular
                     if (column === 'total') {
                         const originalIndexA = rscData.findIndex(d => d.id === a.id);
                         const originalIndexB = rscData.findIndex(d => d.id === b.id);
@@ -1009,14 +1040,48 @@
                         valB = b[column];
                     }
 
-
                     if (typeof valA === 'string') {
                         return sortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
                     } else {
                         return sortDirection === 'asc' ? valA - valB : valB - valA;
                     }
                 });
-                renderRscItems(currentSortedData); // Renderiza os dados ordenados
+                
+                renderRscItems(currentSortedData);
+            }
+
+            // Função para ajustar tooltips que podem sair da tabela
+            function adjustTooltipPosition() {
+                document.querySelectorAll('.tooltip-container').forEach(container => {
+                    const tooltip = container.querySelector('.tooltip-text');
+                    if (!tooltip) return;
+                    
+                    container.addEventListener('mouseenter', () => {
+                        const containerRect = container.getBoundingClientRect();
+                        const tooltipRect = tooltip.getBoundingClientRect();
+                        const tableRect = container.closest('table').getBoundingClientRect();
+                        
+                        // Reset para posição padrão
+                        tooltip.style.left = '';
+                        tooltip.style.right = '';
+                        tooltip.style.transform = '';
+                        
+                        // Verifica se o tooltip vai ultrapassar a direita da tabela
+                        if (containerRect.right + tooltipRect.width > tableRect.right) {
+                            tooltip.style.left = 'auto';
+                            tooltip.style.right = '0';
+                            tooltip.style.transform = 'none';
+                        }
+                        
+                        // Verifica se o tooltip vai ultrapassar o topo da tabela
+                        if (containerRect.top - tooltipRect.height < tableRect.top) {
+                            tooltip.style.bottom = 'auto';
+                            tooltip.style.top = '100%';
+                            tooltip.style.marginBottom = '0';
+                            tooltip.style.marginTop = '10px';
+                        }
+                    });
+                });
             }
 
             // Adiciona event listeners
@@ -1031,6 +1096,7 @@
             // Renderização e cálculo iniciais
             renderRscItems();
             calculateTotalScore();
+            adjustTooltipPosition();
         });
     </script>
 </body>
